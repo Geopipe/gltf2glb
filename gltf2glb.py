@@ -16,13 +16,15 @@ import struct
 EMBED_ARR = ['textures', 'shaders']
 BASE64_REGEXP = re.compile(r'^data:.*?;base64,')
 
-class GLBEncoder:
+class BodyEncoder:
+	""" Encode the binary chunks of the GLB's body """
 	def __init__(self, containing_dir):
 		self.containing_dir = containing_dir
 		self.body_length = 0
 		self.body_parts = []
 
 	def addToBody(self, uri):
+		""" Adds an immediate or external data uri to the GLB's body """
 		if uri.startswith('data:'):
 			if not BASE64_REGEXP.match(uri):
 				raise ValueError("Unsupported data URI")
@@ -40,8 +42,49 @@ class GLBEncoder:
 		self.body_length += length
 		return (offset, length)
 
-""" Convert gltf to glb"""
+class GLBEncoder:
+	""" Combine a JSON header and a binary body into a GLB with a proper header """
+	def __init__(self, header, body):
+		self.header = header
+		self.body = body
+
+	def export(self, filename):
+		""" Export the GLB file """
+		scene_len = len(self.header)
+	
+		# As body is 4-byte-aligned, the scene length must be padded to a multiple of 4
+		padded_scene_len = (scene_len + 3) & ~3
+	
+		# Header is 20 bytes
+		body_offset = padded_scene_len + 20
+		file_len = body_offset + self.body.body_length
+	
+		# Write the header
+		glb_out = bytearray()
+		glb_out.extend(struct.pack('>I', 0x676C5446))
+		glb_out.extend(struct.pack('<I', 1))
+		glb_out.extend(struct.pack('<I', file_len))
+		glb_out.extend(struct.pack('<I', padded_scene_len))
+		glb_out.extend(struct.pack('<I', 0))
+		glb_out.extend(self.header)
+
+		# Add padding
+		while len(glb_out) < body_offset:
+			glb_out.extend(' ')
+	
+		# Write the body
+		for i in xrange(0, len(self.body.body_parts), 2):
+			offset = self.body.body_parts[i]
+			contents = self.body.body_parts[i + 1]
+			if offset + body_offset != len(glb_out):
+				raise IndexError
+			glb_out.extend(contents)
+	
+		with open(filename, 'w') as f:
+			f.write(glb_out)
+
 def main():
+	""" Convert GLTF to GLB"""
 
 	# Parse options and get results
 	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
@@ -69,8 +112,8 @@ def main():
 	gltf = gltf.decode('utf-8')
 	scene = json.loads(gltf)
 
-	# Set up encoder
-	encoder = GLBEncoder(containing_dir = os.path.dirname(args.filename))
+	# Set up body_encoder
+	body_encoder = BodyEncoder(containing_dir = os.path.dirname(args.filename))
 
 	# Let GLTF parser know that it is using the Binary GLTF extension
 	try:
@@ -86,7 +129,7 @@ def main():
 		if buf_type and buf_type != 'arraybuffer':
 			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
 
-		offset, length = encoder.addToBody(buf["uri"])
+		offset, length = body_encoder.addToBody(buf["uri"])
 		scene["buffers"][buf_id]["byteOffset"] = offset
 
 	# Iterate over the bufferViews
@@ -106,7 +149,7 @@ def main():
 			uri = shader["uri"]
 			del scene["shaders"][shader_id]["uri"]
 
-			offset, length = encoder.addToBody(uri)
+			offset, length = body_encoder.addToBody(uri)
 			bufview_id = 'binary_shader_' + str(shader_id)
 			scene["shaders"][shader_id]["extensions"] = \
 				{'KHR_binary_glTF': {'bufferView': bufview_id}}
@@ -118,7 +161,7 @@ def main():
 	if 'images' in scene:
 		for image_id, image in scene["images"].iteritems():
 			uri = image["uri"]
-			offset, length = encoder.addToBody(uri)
+			offset, length = body_encoder.addToBody(uri)
 
 			bufview_id = 'binary_images_' + str(image_id)
 			# TODO: Add extension properties
@@ -135,41 +178,15 @@ def main():
 				{'buffer': buffer_name, 'byteLength': length, 'byteOffset': offset}
 
 	if args.cesium:
-		scene["buffers"] = {'KHR_binary_glTF': {'uri': '', 'byteLength': encoder.body_length}}
+		scene["buffers"] = {'KHR_binary_glTF': {'uri': '', 'byteLength': body_encoder.body_length}}
 	else:
 		scene["buffers"] = None
 
 	new_scene_str = bytearray(json.dumps(scene, separators=(',', ':'), sort_keys=True))
-	scene_len = len(new_scene_str)
-
-	# As body is 4-byte-aligned, the scene length must be padded to a multiple of 4
-	padded_scene_len = (scene_len + 3) & ~3
-
-	# Header is 20 bytes
-	body_offset = padded_scene_len + 20
-	file_len = body_offset + encoder.body_length
-
-	# Write the header
-	glb_out = bytearray()
-	glb_out.extend(struct.pack('>I', 0x676C5446))
-	glb_out.extend(struct.pack('<I', 1))
-	glb_out.extend(struct.pack('<I', file_len))
-	glb_out.extend(struct.pack('<I', padded_scene_len))
-	glb_out.extend(struct.pack('<I', 0))
-	glb_out.extend(new_scene_str)
-	while len(glb_out) < body_offset:
-		glb_out.extend(' ')
-
-	# Write the body
-	for i in xrange(0, len(encoder.body_parts), 2):
-		offset = encoder.body_parts[i]
-		contents = encoder.body_parts[i + 1]
-		if offset + body_offset != len(glb_out):
-			raise IndexError
-		glb_out.extend(contents)
-
-	with open(os.path.join(os.path.dirname(args.filename), os.path.splitext(os.path.basename(args.filename))[0] + '.glb'), 'w') as f:
-		f.write(glb_out)
+	encoder = GLBEncoder(new_scene_str, body_encoder)
+	fname_out = os.path.join(os.path.dirname(args.filename), \
+	                         os.path.splitext(os.path.basename(args.filename))[0]) + '.glb'
+	encoder.export(fname_out)
 
 if __name__ == "__main__":
 	main()
