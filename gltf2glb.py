@@ -13,6 +13,8 @@ import json
 import re
 import struct
 
+import b3dm, i3dm
+
 EMBED_ARR = ['textures', 'shaders']
 BASE64_REGEXP = re.compile(r'^data:.*?;base64,')
 
@@ -50,6 +52,11 @@ class GLBEncoder:
 
 	def export(self, filename):
 		""" Export the GLB file """
+		with open(filename, 'w') as f:
+			f.write(self.exportString())
+
+	def exportString(self):
+		""" Export the GLB data"""
 		scene_len = len(self.header)
 	
 		# As body is 4-byte-aligned, the scene length must be padded to a multiple of 4
@@ -80,8 +87,7 @@ class GLBEncoder:
 				raise IndexError
 			glb_out.extend(contents)
 	
-		with open(filename, 'w') as f:
-			f.write(glb_out)
+		return glb_out
 
 def main():
 	""" Convert GLTF to GLB"""
@@ -92,6 +98,10 @@ def main():
 						help="Embed textures or shares into binary GLTF file")
 	parser.add_argument("-c", "--cesium", action="store_true", \
 						help="sets the old body buffer name for compatibility with Cesium")
+	parser.add_argument("-i", "--i3dm", type=str, \
+	                    help="Export i3dm, with optional path to JSON instance table data")
+	parser.add_argument("-b", "--b3dm", type=str, \
+	                    help="Export b3dm, with optional path to JSON batch table data")
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
@@ -184,9 +194,26 @@ def main():
 
 	new_scene_str = bytearray(json.dumps(scene, separators=(',', ':'), sort_keys=True))
 	encoder = GLBEncoder(new_scene_str, body_encoder)
+	if args.b3dm != None:
+		ext = 'b3dm'
+	elif args.i3dm != None:
+		ext = 'i3dm'
+	else:
+		ext = 'glb'
+	#print("Exporting %s" % (ext))
+
 	fname_out = os.path.join(os.path.dirname(args.filename), \
-	                         os.path.splitext(os.path.basename(args.filename))[0]) + '.glb'
-	encoder.export(fname_out)
+	                         os.path.splitext(os.path.basename(args.filename))[0]) + '.' + ext
+
+	if args.b3dm != None:
+		glb = encoder.exportString()
+		b3dm_encoder = b3dm.B3DM()
+		with open(fname_out, 'w') as f:
+			f.write(b3dm_encoder.writeBinary(glb))
+	elif args.i3dm != None:
+		raise NotImplementedError
+	else:
+		encoder.export(fname_out)
 
 if __name__ == "__main__":
 	main()
