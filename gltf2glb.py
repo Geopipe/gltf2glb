@@ -208,6 +208,9 @@ def main():
 	if args.b3dm != None:
 		glb = encoder.exportString()
 		b3dm_encoder = b3dm.B3DM()
+		if len(args.b3dm):
+			with open(args.b3dm, 'r') as f:
+				b3dm_encoder.loadJSONBatch(f.read())
 		with open(fname_out, 'w') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
 	elif args.i3dm != None:
