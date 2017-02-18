@@ -35,21 +35,17 @@ class BatchTable:
 			have a real value for that particular object.
 		"""
 		if object_wise:
-			n_objs = 1
+			n_objs = len(data_in)
 			# Find all the fields for all the objects
-			for obj in data_in:
-				# First, add this object's key-vals
-				for key,val in obj.iteritems:
-					if not key in batch_in:
-						self.batch_in[key] = [None] * n_objs
-						self.batch_in[key][n_objs - 1] = obj[key]
-					else:
-						val.append(obj[key])
+			for obj, objval in data_in.iteritems():
+				obj = int(obj)
 
-				# Second, fill up keys that don't exist for this object
-				for key, val in self.batch_in.iteritems():
-					if len(val) != n_objs:
-						val.append(None)
+				# Add this object's key-vals
+				for key, val in objval.iteritems():
+					if not key in self.batch_in:
+						self.batch_in[key] = [None] * n_objs
+
+					self.batch_in[key][obj] = val
 
 				n_objs += 1
 
