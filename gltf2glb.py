@@ -102,6 +102,8 @@ def main():
 	                    help="Export i3dm, with optional path to JSON instance table data")
 	parser.add_argument("-b", "--b3dm", type=str, \
 	                    help="Export b3dm, with optional path to JSON batch table data")
+	parser.add_argument("-o", "--output", required=False, default=None,
+	                    help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
@@ -202,8 +204,14 @@ def main():
 		ext = 'glb'
 	#print("Exporting %s" % (ext))
 
-	fname_out = os.path.join(os.path.dirname(args.filename), \
-	                         os.path.splitext(os.path.basename(args.filename))[0]) + '.' + ext
+	fname_out = os.path.splitext(os.path.basename(args.filename))[0] + '.' + ext
+	if None != args.output:
+		if "" == os.path.basename(args.output):
+			fname_out = os.path.join(fname_out, fname_out)
+		else:
+			fname_out = args.output
+	else:
+		fname_out = os.path.join(os.path.dirname(args.filename), fname_out)
 
 	if args.b3dm != None:
 		glb = encoder.exportString()
