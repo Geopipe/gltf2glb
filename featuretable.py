@@ -9,6 +9,7 @@
 
 import struct
 import json
+from batchtable import BatchTable
 
 class FeatureTable(BatchTable):
 	def __init__(self):

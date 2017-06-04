@@ -68,7 +68,6 @@ class B3DM(BatchTable):
 		output.extend(struct.pack('<I', len_feature_bin))
 		output.extend(struct.pack('<I', len_batch_json))
 		output.extend(struct.pack('<I', len_batch_bin))
-		output.extend(struct.pack('<I', num_features))
 	
 		# Sanity check
 		if (len(output) != B3DM_HEADER_LEN):
