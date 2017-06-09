@@ -13,19 +13,30 @@ from featuretable import FeatureTable
 B3DM_VERSION = 1
 B3DM_HEADER_LEN = 28
 
-class B3DM(BatchTable):
+class B3DM:
 	def __init__(self):
 		self.batch_table = BatchTable()
 		self.feature_table = FeatureTable()
 		self.gltf_bin = bytearray()
 
+	def loadJSONBatch(self, data_in, object_wise = True):
+		self.batch_table.loadJSONBatch(data_in, object_wise)
+
+	def loadJSONFeature(self, data_in, object_wise = True):
+		self.feature_table.loadJSONBatch(data_in, object_wise)
+
 	def writeBinary(self, gltf_bin, num_batch_features = 0, num_feature_features = 0):
+
+		# Add the required field BATCH_LENGTH to the feature table,
+		# as well as any other required globals
+		num_batch_features = max(num_batch_features, self.batch_table.getNumFeatures())
+		self.feature_table.addGlobal('BATCH_LENGTH', num_batch_features)
+		num_feature_features = max(num_feature_features, self.feature_table.getNumFeatures())
+
 		self.batch_table.finalize()
 		self.feature_table.finalize()
 
 		# Generate the header
-		num_batch_features =   max(num_batch_features,   self.batch_table.getNumFeatures())
-		num_feature_features = max(num_feature_features, self.feature_table.getNumFeatures())
 		output = self.writeHeader(gltf_bin, num_batch_features, num_feature_features)
 
 		# Add the feature table JSON to the output

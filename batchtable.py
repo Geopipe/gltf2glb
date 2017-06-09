@@ -54,6 +54,10 @@ class BatchTable:
 
 		self.num_features = len(self.batch_in)
 
+	def addGlobal(self, key, value):
+		self.batch_in[key] = value
+		self.num_features += 1
+
 	def writeOutput(self):
 		data_out = {}
 		# TODO: Add proper encoding to JSON + binary, rather than just
