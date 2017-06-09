@@ -5,7 +5,7 @@
 # pack multiple Tile3D files into a
 # single package.
 # Component of gltf2glb
-# (c) 2016 Geopipe, Inc.
+# (c) 2016-2017 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #------------------------------------
 
@@ -61,10 +61,10 @@ class CmptEncoder:
 			f.write(self.body)
 
 def main():
-	""" Convert GLTF to GLB"""
+	""" Pack one or more i3dm and/or b3dm files into a cmpt"""
 
 	# Parse options and get results
-	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
+	parser = argparse.ArgumentParser(description='Packs one or more i3dm and/or b3dm files into a cmpt')
 	parser.add_argument("-o", "--output", type=str, required='True', \
 						help="Output cmpt file")
 	parser.add_argument('input_files', nargs='+')
