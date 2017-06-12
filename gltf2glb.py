@@ -170,7 +170,7 @@ def main():
 				{'buffer': buffer_name, 'byteLength': length, 'byteOffset': offset}
 
 	# Iterate over images
-	if 'images' in scene:
+	if 'textures' in embed and 'images' in scene:
 		for image_id, image in scene["images"].iteritems():
 			uri = image["uri"]
 			offset, length = body_encoder.addToBody(uri)
