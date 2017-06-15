@@ -17,6 +17,8 @@ import b3dm, i3dm
 
 EMBED_ARR = ['textures', 'shaders']
 BASE64_REGEXP = re.compile(r'^data:.*?;base64,')
+BINARY_EXTENSION = 'KHR_binary_glTF'
+BINARY_BUFFER = 'binary_glTF'			# Cesium is standards-compliant now
 
 class BodyEncoder:
 	""" Encode the binary chunks of the GLB's body """
@@ -25,7 +27,7 @@ class BodyEncoder:
 		self.body_length = 0
 		self.body_parts = []
 
-	def addToBody(self, uri):
+	def addToBody(self, uri, length):
 		""" Adds an immediate or external data uri to the GLB's body """
 		if uri.startswith('data:'):
 			if not BASE64_REGEXP.match(uri):
@@ -35,6 +37,10 @@ class BodyEncoder:
 		else:
 			with open(os.path.join(self.containing_dir, uri), 'r') as f:
 				buf = bytearray(f.read())
+
+		# Fix length variable and buffer length
+		length = min(length, len(buf)) if length is not None else len(buf)
+		buf = buf[0:length]
 	
 		# Handle the buffer
 		offset = self.body_length
@@ -68,7 +74,7 @@ class GLBEncoder:
 	
 		# Write the header
 		glb_out = bytearray()
-		glb_out.extend(struct.pack('>I', 0x676C5446))
+		glb_out.extend(struct.pack('>I', 0x676C5446))		# magic number: "glTF"
 		glb_out.extend(struct.pack('<I', 1))
 		glb_out.extend(struct.pack('<I', file_len))
 		glb_out.extend(struct.pack('<I', padded_scene_len))
@@ -97,7 +103,7 @@ def main():
 	parser.add_argument("-e", "--embed", action="store_true", \
 						help="Embed textures or shares into binary GLTF file")
 	parser.add_argument("-c", "--cesium", action="store_true", \
-						help="sets the old body buffer name for compatibility with Cesium")
+						help="sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]")
 	parser.add_argument("-i", "--i3dm", type=str, \
 	                    help="Export i3dm, with optional path to JSON instance table data")
 	parser.add_argument("-b", "--b3dm", type=str, \
@@ -111,8 +117,6 @@ def main():
 	if args.embed:
 		for t in EMBED_ARR:
 			embed[t] = True
-
-	buffer_name = 'KHR_binary_glTF' if args.cesium else 'binary_glTF'
 
 	# Make sure the input file is *.gltf
 	if not args.filename.endswith('.gltf'):
@@ -129,11 +133,9 @@ def main():
 
 	# Let GLTF parser know that it is using the Binary GLTF extension
 	try:
-		scene["extensionsUsed"].append('KHR_binary_glTF')
-	except KeyError:
-		scene["extensionsUsed"] = ['KHR_binary_glTF']
-	except TypeError:
-		scene["extensionsUsed"] = ['KHR_binary_glTF']
+		scene["extensionsUsed"].append(BINARY_EXTENSION)
+	except (KeyError, TypeError):
+		scene["extensionsUsed"] = [BINARY_EXTENSION]
 
 	# Iterate the buffers in the scene:
 	for buf_id, buf in scene["buffers"].iteritems():
@@ -141,10 +143,20 @@ def main():
 		if buf_type and buf_type != 'arraybuffer':
 			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
 
-		offset, length = body_encoder.addToBody(buf["uri"])
-		scene["buffers"][buf_id]["byteOffset"] = offset
+		try:
+			length = buf["byteLength"]
+		except:
+			length = None
 
-	# Iterate over the bufferViews
+		offset, length = body_encoder.addToBody(buf["uri"], length)
+		try:
+			buf["extras"]
+		except KeyError:
+			buf["extras"] = {}
+		buf["extras"]["byteOffset"] = offset
+
+	# Iterate over the bufferViews to
+	# move buffers into the single GLB buffer body
 	for bufview_id, bufview in scene["bufferViews"].iteritems():
 		buf_id = bufview["buffer"]
 		try:
@@ -152,8 +164,11 @@ def main():
 		except KeyError:
 			raise KeyError("Buffer ID reference not found: %s" % (buf_id))
 
-		scene["bufferViews"][bufview_id]["buffer"] = buffer_name
-		scene["bufferViews"][bufview_id]["byteOffset"] += referenced_buf["byteOffset"]
+		scene["bufferViews"][bufview_id]["buffer"] = BINARY_BUFFER
+		try:
+			scene["bufferViews"][bufview_id]["byteOffset"] += referenced_buf["extras"]["byteOffset"]
+		except KeyError:
+			scene["bufferViews"][bufview_id]["byteOffset"] = referenced_buf["extras"]["byteOffset"]
 
 	# Iterate over the shaders
 	if 'shaders' in embed and 'shaders' in scene:
@@ -161,24 +176,24 @@ def main():
 			uri = shader["uri"]
 			del scene["shaders"][shader_id]["uri"]
 
-			offset, length = body_encoder.addToBody(uri)
-			bufview_id = 'binary_shader_' + str(shader_id)
+			offset, length = body_encoder.addToBody(uri, None)
+			bufview_id = BINARY_BUFFER + '_shader_' + str(shader_id)
 			scene["shaders"][shader_id]["extensions"] = \
-				{'KHR_binary_glTF': {'bufferView': bufview_id}}
+				{BINARY_EXTENSION: {'bufferView': bufview_id}}
 
 			scene["bufferViews"][bufview_id] = \
-				{'buffer': buffer_name, 'byteLength': length, 'byteOffset': offset}
+				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
 
 	# Iterate over images
 	if 'textures' in embed and 'images' in scene:
 		for image_id, image in scene["images"].iteritems():
 			uri = image["uri"]
-			offset, length = body_encoder.addToBody(uri)
+			offset, length = body_encoder.addToBody(uri, None)
 
-			bufview_id = 'binary_images_' + str(image_id)
+			bufview_id = BINARY_BUFFER + '_images_' + str(image_id)
 			# TODO: Add extension properties
 			scene["images"][image_id]["extensions"] = \
-				{'KHR_binary_glTF': {\
+				{BINARY_EXTENSION: {\
 					'bufferView': bufview_id,\
 					'mimeType': 'image/i-dont-know',\
 					'height': 9999,\
@@ -187,12 +202,12 @@ def main():
 			del scene["images"][image_id]["uri"]
 
 			scene["bufferViews"][bufview_id] = \
-				{'buffer': buffer_name, 'byteLength': length, 'byteOffset': offset}
+				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
 
-	if args.cesium:
-		scene["buffers"] = {'KHR_binary_glTF': {'uri': '', 'byteLength': body_encoder.body_length}}
-	else:
-		scene["buffers"] = None
+	scene["buffers"] = {BINARY_BUFFER:
+	                       {'byteLength': body_encoder.body_length,
+	                       'uri': ''}
+	                   };
 
 	new_scene_str = bytearray(json.dumps(scene, separators=(',', ':'), sort_keys=True))
 	encoder = GLBEncoder(new_scene_str, body_encoder)
