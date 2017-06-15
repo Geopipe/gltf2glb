@@ -13,7 +13,7 @@ Usage
 
 `-e|--embed`: Embed shaders and textures in the GLB file, even if not already embedded.
 
-`-c|--cesium`: Use the binary buffer name `KHR_binary_glTF` for compatibility with Cesium.
+`-c|--cesium`: [DEPRECATED] Use the binary buffer name `KHR_binary_glTF`. Cesium no longer requires this.
 
 `-i|--i3dm`: Export i3dm, with optional path to JSON instance table data. Use "" for the path if there's no instance data to include.
 
