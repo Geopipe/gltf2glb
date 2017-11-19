@@ -35,7 +35,7 @@ class BodyEncoder:
 			uri = BASE64_REGEXP.sub("", uri)
 			buf = bytearray(base64.b64decode(uri))
 		else:
-			with open(os.path.join(self.containing_dir, uri), 'r') as f:
+			with open(os.path.join(self.containing_dir, uri), 'rb') as f:
 				buf = bytearray(f.read())
 
 		# Fix length variable and buffer length
@@ -58,7 +58,7 @@ class GLBEncoder:
 
 	def export(self, filename):
 		""" Export the GLB file """
-		with open(filename, 'w') as f:
+		with open(filename, 'wb') as f:
 			f.write(self.exportString())
 
 	def exportString(self):
@@ -123,7 +123,7 @@ def main():
 		print("Failed to create binary GLTF file: input is not *.gltf")
 		sys.exit(-1)
 
-	with open(args.filename, 'r') as f:
+	with open(args.filename, 'rb') as f:
 		gltf = f.read()
 	gltf = gltf.decode('utf-8')
 	scene = json.loads(gltf)
@@ -232,12 +232,12 @@ def main():
 		glb = encoder.exportString()
 		b3dm_encoder = b3dm.B3DM()
 		if len(args.b3dm):
-			with open(args.b3dm, 'r') as f:
+			with open(args.b3dm, 'rb') as f:
 				b3dm_json = json.loads(f.read())
 				print b3dm_json
 				b3dm_encoder.loadJSONBatch(b3dm_json)
 
-		with open(fname_out, 'w') as f:
+		with open(fname_out, 'wb') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
 	elif args.i3dm != None:
 		raise NotImplementedError
