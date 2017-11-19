@@ -74,10 +74,12 @@ class GLBEncoder:
 		# Write the header
 		glb_out = bytearray()
 		glb_out.extend(struct.pack('>I', 0x676C5446))		# magic number: "glTF"
-		glb_out.extend(struct.pack('<I', 1))
+		glb_out.extend(struct.pack('<I', 2))
 		glb_out.extend(struct.pack('<I', file_len))
+
+		# JSON chunk
 		glb_out.extend(struct.pack('<I', padded_scene_len))
-		glb_out.extend(struct.pack('<I', 0))
+		glb_out.extend(struct.pack('<I', 0x4E4F534A))
 		glb_out.extend(self.header)
 
 		# Add padding
