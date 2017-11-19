@@ -66,10 +66,12 @@ class GLBEncoder:
 	
 		# As body is 4-byte-aligned, the scene length must be padded to a multiple of 4
 		padded_scene_len = (scene_len + 3) & ~3
+		padded_body_length = (self.body.body_length + 3) & ~3
 	
 		# Header is 20 bytes
 		body_offset = padded_scene_len + 20
-		file_len = body_offset + self.body.body_length
+		body_offset_data = body_offset + 8
+		file_len = body_offset_data + padded_body_length
 	
 		# Write the header
 		glb_out = bytearray()
@@ -93,6 +95,9 @@ class GLBEncoder:
 			if offset + body_offset != len(glb_out):
 				raise IndexError
 			glb_out.extend(contents)
+			
+		while len(glb_out) < file_len:
+			glb_out.extend([0])
 	
 		return glb_out
 
