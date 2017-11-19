@@ -17,8 +17,6 @@ import b3dm, i3dm
 
 EMBED_ARR = ['textures', 'shaders']
 BASE64_REGEXP = re.compile(r'^data:.*?;base64,')
-BINARY_EXTENSION = 'KHR_binary_glTF'
-BINARY_BUFFER = 'binary_glTF'			# Cesium is standards-compliant now
 
 class BodyEncoder:
 	""" Encode the binary chunks of the GLB's body """
@@ -132,12 +130,6 @@ def main():
 	# Set up body_encoder
 	body_encoder = BodyEncoder(containing_dir = os.path.dirname(args.filename))
 
-	# Let GLTF parser know that it is using the Binary GLTF extension
-	try:
-		scene["extensionsUsed"].append(BINARY_EXTENSION)
-	except (KeyError, TypeError):
-		scene["extensionsUsed"] = [BINARY_EXTENSION]
-
 	# Iterate the buffers in the scene:
 	for buf_id, buf in enumerate(scene["buffers"]):
 		buf_type = buf.get("type",None)
@@ -150,6 +142,7 @@ def main():
 			length = None
 
 		offset, length = body_encoder.addToBody(buf["uri"], length)
+		
 		try:
 			buf["extras"]
 		except KeyError:
@@ -165,7 +158,7 @@ def main():
 		except KeyError:
 			raise KeyError("Buffer ID reference not found: %s" % (buf_id))
 
-		scene["bufferViews"][bufview_id]["buffer"] = BINARY_BUFFER
+		scene["bufferViews"][bufview_id]["buffer"] = 0
 		try:
 			scene["bufferViews"][bufview_id]["byteOffset"] += referenced_buf["extras"]["byteOffset"]
 		except KeyError:
@@ -178,36 +171,23 @@ def main():
 			del scene["shaders"][shader_id]["uri"]
 
 			offset, length = body_encoder.addToBody(uri, None)
-			bufview_id = BINARY_BUFFER + '_shader_' + str(shader_id)
-			scene["shaders"][shader_id]["extensions"] = \
-				{BINARY_EXTENSION: {'bufferView': bufview_id}}
 
-			scene["bufferViews"][bufview_id] = \
-				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
+			scene["bufferViews"].append({'buffer': 0, 'byteLength': length, 'byteOffset': offset})
+			scene["shaders"][shader_id]["bufferView"] = len(scene["bufferViews"])-1
 
 	# Iterate over images
 	if 'textures' in embed and 'images' in scene:
 		for image_id, image in enumerate(scene["images"]):
 			uri = image["uri"]
-			offset, length = body_encoder.addToBody(uri, None)
-
-			bufview_id = BINARY_BUFFER + '_images_' + str(image_id)
-			# TODO: Add extension properties
-			scene["images"][image_id]["extensions"] = \
-				{BINARY_EXTENSION: {\
-					'bufferView': bufview_id,\
-					'mimeType': 'image/i-dont-know',\
-					'height': 9999,\
-					'width': 9999\
-				}}
 			del scene["images"][image_id]["uri"]
 
-			scene["bufferViews"].append({'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset})
+			offset, length = body_encoder.addToBody(uri, None)
+			
+			scene["bufferViews"].append({'buffer': 0, 'byteLength': length, 'byteOffset': offset})
+			scene["images"][image_id]["bufferView"] = len(scene["bufferViews"])-1
+			scene["images"][image_id]["mimeType"] = "image/png"
 
-	scene["buffers"] = {BINARY_BUFFER:
-	                       {'byteLength': body_encoder.body_length,
-	                       'uri': ''}
-	                   };
+	scene["buffers"] = [{'byteLength': body_encoder.body_length}];
 
 	new_scene_str = bytearray(json.dumps(scene, separators=(',', ':'), sort_keys=True))
 	encoder = GLBEncoder(new_scene_str, body_encoder)
