@@ -87,12 +87,16 @@ class GLBEncoder:
 		# Add padding
 		while len(glb_out) < body_offset:
 			glb_out.extend(' ')
-	
+
+        # Binary chunk
+        glb_out.extend(struct.pack('<I', padded_body_length))
+        glb_out.extend(struct.pack('<I', 0x004E4942))
+
 		# Write the body
 		for i in xrange(0, len(self.body.body_parts), 2):
 			offset = self.body.body_parts[i]
 			contents = self.body.body_parts[i + 1]
-			if offset + body_offset != len(glb_out):
+			if offset + body_offset_data != len(glb_out):
 				raise IndexError
 			glb_out.extend(contents)
 			
