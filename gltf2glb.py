@@ -88,9 +88,9 @@ class GLBEncoder:
 		while len(glb_out) < body_offset:
 			glb_out.extend(' ')
 
-        # Binary chunk
-        glb_out.extend(struct.pack('<I', padded_body_length))
-        glb_out.extend(struct.pack('<I', 0x004E4942))
+		# Binary chunk
+		glb_out.extend(struct.pack('<I', padded_body_length))
+		glb_out.extend(struct.pack('<I', 0x004E4942))
 
 		# Write the body
 		for i in xrange(0, len(self.body.body_parts), 2):
@@ -115,11 +115,11 @@ def main():
 	parser.add_argument("-c", "--cesium", action="store_true", \
 						help="sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]")
 	parser.add_argument("-i", "--i3dm", type=str, \
-	                    help="Export i3dm, with optional path to JSON instance table data")
+						help="Export i3dm, with optional path to JSON instance table data")
 	parser.add_argument("-b", "--b3dm", type=str, \
-	                    help="Export b3dm, with optional path to JSON batch table data")
+						help="Export b3dm, with optional path to JSON batch table data")
 	parser.add_argument("-o", "--output", required=False, default=None,
-	                    help="Optional output path (defaults to the path of the input file")
+						help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
