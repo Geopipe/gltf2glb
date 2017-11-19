@@ -40,6 +40,7 @@ class BodyEncoder:
 
 		# Fix length variable and buffer length
 		length = min(length, len(buf)) if length is not None else len(buf)
+		print("Adding %s (%d of %d)" % (os.path.join(self.containing_dir, uri), length, len(buf)))
 		buf = buf[0:length]
 	
 		# Handle the buffer
