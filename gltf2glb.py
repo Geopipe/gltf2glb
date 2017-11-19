@@ -138,8 +138,8 @@ def main():
 		scene["extensionsUsed"] = [BINARY_EXTENSION]
 
 	# Iterate the buffers in the scene:
-	for buf_id, buf in scene["buffers"].iteritems():
-		buf_type = buf["type"]
+	for buf_id, buf in enumerate(scene["buffers"]):
+		buf_type = buf.get("type",None)
 		if buf_type and buf_type != 'arraybuffer':
 			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
 
@@ -157,7 +157,7 @@ def main():
 
 	# Iterate over the bufferViews to
 	# move buffers into the single GLB buffer body
-	for bufview_id, bufview in scene["bufferViews"].iteritems():
+	for bufview_id, bufview in enumerate(scene["bufferViews"]):
 		buf_id = bufview["buffer"]
 		try:
 			referenced_buf = scene["buffers"][buf_id]
@@ -186,7 +186,7 @@ def main():
 
 	# Iterate over images
 	if 'textures' in embed and 'images' in scene:
-		for image_id, image in scene["images"].iteritems():
+		for image_id, image in enumerate(scene["images"]):
 			uri = image["uri"]
 			offset, length = body_encoder.addToBody(uri, None)
 
@@ -201,8 +201,7 @@ def main():
 				}}
 			del scene["images"][image_id]["uri"]
 
-			scene["bufferViews"][bufview_id] = \
-				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
+			scene["bufferViews"].append({'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset})
 
 	scene["buffers"] = {BINARY_BUFFER:
 	                       {'byteLength': body_encoder.body_length,
