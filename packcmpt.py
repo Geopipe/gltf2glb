@@ -14,6 +14,8 @@ import argparse
 import struct
 
 CMPT_EXT = '.cmpt'
+CMPT_MAGIC = 'cmpt'
+CMPT_VERSION = 1
 CMPT_HEADER_LEN = 16
 VALID_INTERIOR_TILES = ['b3dm', 'i3dm', 'cmpt']
 
@@ -45,7 +47,7 @@ class CmptEncoder:
 		self.tile_count += 1
 
 	def composeHeader(self):
-		self.header.extend('cmpt')								# Magic
+		self.header.extend(CMPT_MAGIC)							# Magic
 		self.header.extend(struct.pack('<I', 1))				# Version
 		self.header.extend(struct.pack('<I', CMPT_HEADER_LEN + len(self.body)))
 		self.header.extend(struct.pack('<I', self.tile_count))	# Number of tiles
@@ -56,9 +58,62 @@ class CmptEncoder:
 
 	def export(self, filename):
 		self.composeHeader()
-		with open(filename, 'w') as f:
+		with open(filename, 'wb') as f:
 			f.write(self.header)
 			f.write(self.body)
+
+class CmptDecoder:
+	""" Pack multiple Tile3D file(s) into a single unit """
+	def __init__(self):
+		self.data = ""
+		self.tiles = []
+
+	def add(self, filename = None, data = None):
+		if filename:
+			with open(filename, 'rb') as f:
+				self.data = f.read()
+		elif data:
+			self.data = data
+		else:
+			print("Both filename and data cannot be None!")
+			raise IOError
+
+	def decode(self):
+		# Grab the header
+		self.offset = 0;
+		magic = self.unpack('4s', self.data)
+		version = self.unpack('<I', self.data)
+
+		if magic != CMPT_MAGIC or version > CMPT_VERSION:
+			print("Unrecognized magic string %s or bad version %d" % (magic, version))
+			raise IOError
+
+		self.length = self.unpack('<I', self.data)
+		self.count = self.unpack('<I', self.data)
+
+		# Now grab all the body items
+		self.tiles = []
+		for i in xrange(self.count):
+			# All the possible inner tile items have a byte count in the same place.
+			inner_magic = self.unpack('4s', self.data)
+			if inner_magic not in VALID_INTERIOR_TILES:
+				print("Unrecognized interior tile magic %s" % (inner_magic))
+			inner_version = self.unpack('<I', self.data)
+			inner_length = self.unpack('<I', self.data)
+
+			self.tiles.append(self.data[self.offset : self.offset + inner_length])
+			self.offset += inner_length
+
+		del self.data
+
+	def getTiles(self):
+		return self.tiles
+			
+	def unpack(self, fmt, data):
+		calc_len = struct.calcsize(fmt)
+		self.offset += calc_len
+		return struct.unpack(fmt, data[self.offset - calc_len : self.offset])[0]
+
 
 def main():
 	""" Pack one or more i3dm and/or b3dm files into a cmpt"""
@@ -67,13 +122,25 @@ def main():
 	parser = argparse.ArgumentParser(description='Packs one or more i3dm and/or b3dm files into a cmpt')
 	parser.add_argument("-o", "--output", type=str, required='True', \
 						help="Output cmpt file")
-	parser.add_argument('input_files', nargs='+')
+	parser.add_argument("-u", "--unpack", action='store_true', \
+	                    help="Unpack, rather than pack")
+	parser.add_argument('input_files', nargs='*')
 	args = parser.parse_args()
 
-	encoder = CmptEncoder()
-	for fname in args.input_files:
-		encoder.add(fname)
-	encoder.export(args.output + ('' if args.output.endswith(CMPT_EXT) else CMPT_EXT))
+	if args.unpack:
+		decoder = CmptDecoder()
+		decoder.add(filename = args.output)
+		decoder.decode()
+
+	else:
+		if not len(args.input_files):
+			print("At least one input tile file must be specified!")
+
+		else:
+			encoder = CmptEncoder()
+			for fname in args.input_files:
+				encoder.add(fname)
+			encoder.export(args.output + ('' if args.output.endswith(CMPT_EXT) else CMPT_EXT))
 
 if __name__ == "__main__":
 	main()
