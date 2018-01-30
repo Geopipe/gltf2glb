@@ -9,20 +9,38 @@ Usage
 -----
 
 ### gltf2glb ###
-    ./gltf2glb.py [-e|--embed] [-c|--cesium] [-i|--i3dm instance_table] [-b|--b3dm batch_table] input_file
+```
+$ ./gltf2glb.py -h
+usage: gltf2glb.py [-h] [-e] [-c] [-i I3DM] [-b B3DM] [-o OUTPUT] filename
 
-`-e|--embed`: Embed shaders and textures in the GLB file, even if not already embedded.
+Converts GLTF to GLB
 
-`-c|--cesium`: [DEPRECATED] Use the binary buffer name `KHR_binary_glTF`. Cesium no longer requires this.
+positional arguments:
+  filename
 
-`-i|--i3dm`: Export i3dm, with optional path to JSON instance table data. Use "" for the path if there's no instance data to include.
-
-`-b|--b3dm`: Export b3dm, with optional path to JSON batch table data. Use "" for the path if there's no batch data to include.
+optional arguments:
+  -h, --help                    show this help message and exit
+  -e, --embed                   Embed textures or shares into binary GLTF file
+  -c, --cesium                  sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]
+  -i I3DM, --i3dm I3DM          Export i3dm, with optional path to JSON instance table data
+  -b B3DM, --b3dm B3DM          Export b3dm, with optional path to JSON batch table data
+  -o OUTPUT, --output OUTPUT    Optional output path (defaults to the path of the input file
+```
 
 ### packcmpt ###
-    ./packcmpt.py -o output_file input_file_1 [input file_2 ...]
+```
+$ ./packcmpt.py -h
+usage: packcmpt.py [-h] -o OUTPUT input_files [input_files ...]
 
-`-o|--output`: Specify the path to the output cmpt file
+Packs one or more i3dm and/or b3dm files into a cmpt
+
+positional arguments:
+  input_files
+
+optional arguments:
+  -h, --help                    show this help message and exit
+  -o OUTPUT, --output OUTPUT    Output cmpt file
+```
 
 License
 -------
