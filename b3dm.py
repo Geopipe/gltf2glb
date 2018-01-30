@@ -89,13 +89,13 @@ class B3DM:
 
 	def readBinary(self, data):
 		self.offset = 0
-		self.readHeader()			 # What it says on the tin
+		self.readHeader(data)			 # What it says on the tin
 
 		# Now grab the feature table, batch table, and GLB
-		self.feature_json = json.loads(self.unpackString(data, self.len_feature_json))
+		self.feature_json = self.unpackString(data, self.len_feature_json)
 		self.feature_bin =  self.unpackString(data, self.len_feature_bin)
-		self.batch_json = json.loads(self.unpackString(data, self.len_batch_json))
-		self.batch_bin = json.loads(self.unpackString(data, self.len_batch_bin))
+		self.batch_json = self.unpackString(data, self.len_batch_json)
+		self.batch_bin = self.unpackString(data, self.len_batch_bin)
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
@@ -117,7 +117,7 @@ class B3DM:
 
 	def unpackString(self, data, length):
 		self.offset += length
-		return data[self.offset - length, length]
+		return data[self.offset - length : length]
 
 	def unpack(self, fmt, data):
 		calc_len = struct.calcsize(fmt)
