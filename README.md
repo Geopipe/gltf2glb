@@ -40,8 +40,9 @@ positional arguments:
 optional arguments:
   -h, --help                    show this help message and exit
   -o OUTPUT, --output OUTPUT    Output cmpt file
+  -u                            Unpack the output CMPT file instead of creating it (incomplete)
 ```
 
 License
 -------
-(c) 2016-2017 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.
+(c) 2016-2018 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.
