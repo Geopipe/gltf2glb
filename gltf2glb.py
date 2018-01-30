@@ -96,7 +96,7 @@ class GLBEncoder:
 		return glb_out
 
 def main():
-	""" Convert GLTF to GLB"""
+	""" Convert GLTF to GLB, with optional additional I3DM or B3DM encoding"""
 
 	# Parse options and get results
 	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
@@ -235,7 +235,7 @@ def main():
 			with open(args.b3dm, 'r') as f:
 				b3dm_json = json.loads(f.read())
 				print b3dm_json
-				b3dm_encoder.loadJSONBatch(b3dm_json)
+				b3dm_encoder.loadJSONBatch(b3dm_json, False)
 
 		with open(fname_out, 'w') as f:
 			f.write(b3dm_encoder.writeBinary(glb))

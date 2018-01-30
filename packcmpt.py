@@ -94,6 +94,8 @@ class CmptDecoder:
 		# Now grab all the body items
 		self.tiles = []
 		for i in xrange(self.count):
+			start_idx = self.offset
+
 			# All the possible inner tile items have a byte count in the same place.
 			inner_magic = self.unpack('4s', self.data)
 			if inner_magic not in VALID_INTERIOR_TILES:
@@ -101,7 +103,12 @@ class CmptDecoder:
 			inner_version = self.unpack('<I', self.data)
 			inner_length = self.unpack('<I', self.data)
 
-			self.tiles.append(self.data[self.offset : self.offset + inner_length])
+			self.tiles.append({ \
+				'magic': inner_magic, \
+				'version': inner_version, \
+				'length': inner_length, \
+				'data': self.data[start_idx : self.offset + inner_length]] \
+			});
 			self.offset += inner_length
 
 		del self.data
@@ -113,7 +120,6 @@ class CmptDecoder:
 		calc_len = struct.calcsize(fmt)
 		self.offset += calc_len
 		return struct.unpack(fmt, data[self.offset - calc_len : self.offset])[0]
-
 
 def main():
 	""" Pack one or more i3dm and/or b3dm files into a cmpt"""

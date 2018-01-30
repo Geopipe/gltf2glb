@@ -10,6 +10,7 @@ import struct
 from batchtable import BatchTable
 from featuretable import FeatureTable
 
+B3DM_MAGIC = 'b3dm'
 B3DM_VERSION = 1
 B3DM_HEADER_LEN = 28
 
@@ -72,7 +73,7 @@ class B3DM:
 		         len(gltf_bin)
 	
 		output = bytearray()
-		output.extend("b3dm")
+		output.extend(B3DM_MAGIC)
 		output.extend(struct.pack('<I', B3DM_VERSION))
 		output.extend(struct.pack('<I', length))
 		output.extend(struct.pack('<I', len_feature_json))
@@ -85,3 +86,40 @@ class B3DM:
 			raise ValueError("Incorrect b3dm header length")
 	
 		return output
+
+	def readBinary(self, data):
+		self.offset = 0
+		self.readHeader()			 # What it says on the tin
+
+		# Now grab the feature table, batch table, and GLB
+		self.feature_json = json.loads(self.unpackString(data, self.len_feature_json))
+		self.feature_bin =  self.unpackString(data, self.len_feature_bin)
+		self.batch_json = json.loads(self.unpackString(data, self.len_batch_json))
+		self.batch_bin = json.loads(self.unpackString(data, self.len_batch_bin))
+		self.gltf_bin = self.unpackString(data, self.length - self.offset)
+
+	def readHeader(self, data):
+		self.magic = self.unpack('4s', data)
+		self.version = self.unpack('<I', data)
+
+		if self.magic != B3DM_MAGIC or self.version > B3DM_VERSION:
+			print("Unrecognized magic %s or bad version %d" % (self.magic, self.version))
+			raise IOError
+
+		self.length           = self.unpack('<I', data)
+		self.len_feature_json = self.unpack('<I', data)
+		self.len_feature_bin  = self.unpack('<I', data)
+		self.len_batch_json   = self.unpack('<I', data)
+		self.len_batch_bin    = self.unpack('<I', data)
+
+	def getGLTFBin(self):
+		return self.gltf_bin
+
+	def unpackString(self, data, length):
+		self.offset += length
+		return data[self.offset - length, length]
+
+	def unpack(self, fmt, data):
+		calc_len = struct.calcsize(fmt)
+		self.offset += calc_len
+		return struct.unpack(fmt, data[self.offset - calc_len : self.offset])[0]
