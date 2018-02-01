@@ -107,9 +107,9 @@ class CmptDecoder:
 				'magic': inner_magic, \
 				'version': inner_version, \
 				'length': inner_length, \
-				'data': self.data[start_idx : self.offset + inner_length] \
+				'data': self.data[start_idx : start_idx + inner_length] \
 			});
-			self.offset += inner_length
+			self.offset = start_idx + inner_length
 
 		del self.data
 

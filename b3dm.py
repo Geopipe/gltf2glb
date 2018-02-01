@@ -96,6 +96,7 @@ class B3DM:
 		self.feature_bin =  self.unpackString(data, self.len_feature_bin)
 		self.batch_json = self.unpackString(data, self.len_batch_json)
 		self.batch_bin = self.unpackString(data, self.len_batch_bin)
+
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
@@ -117,7 +118,7 @@ class B3DM:
 
 	def unpackString(self, data, length):
 		self.offset += length
-		return data[self.offset - length : length]
+		return data[self.offset - length : self.offset]
 
 	def unpack(self, fmt, data):
 		calc_len = struct.calcsize(fmt)
