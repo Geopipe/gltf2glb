@@ -24,10 +24,22 @@ def main():
 	                    help="Export i3dm, with optional path to JSON instance table data")
 	parser.add_argument("-b", "--b3dm", type=str, \
 	                    help="Export b3dm, with optional path to JSON batch table data")
-	parser.add_argument("-o", "--output", required=False, default=None,
+	parser.add_argument("-o", "--output", required=False, default=None, \
 	                    help="Optional output path (defaults to the path of the input file")
+	parser.add_argument("-u", "--unpack", action='store_true', \
+	                    help="Unpack rather than create b3dm file")
 	parser.add_argument("filename")
 	args = parser.parse_args()
+
+	if args.b3dm and args.unpack and args.filename:
+		b3dm_decoder = b3dm.B3DM()
+		with open(args.filename, 'rb') as f:
+			data = f.read()
+			b3dm_decoder.readBinary(data)
+		with open(args.filename + '.glb', 'wb') as f:
+			output_data = b3dm_decoder.getGLTFBin()
+			f.write(output_data)
+		sys.exit(0)
 
 	# Make sure the input file is *.glb
 	if not args.filename.endswith('.glb'):

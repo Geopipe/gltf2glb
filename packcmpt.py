@@ -129,7 +129,7 @@ def main():
 	parser.add_argument("-o", "--output", type=str, required='True', \
 						help="Output cmpt file")
 	parser.add_argument("-u", "--unpack", action='store_true', \
-	                    help="Unpack, rather than pack")
+	                    help="Unpack, rather than pack. Give input cmpt file as -o, output dir as input file")
 	parser.add_argument('input_files', nargs='*')
 	args = parser.parse_args()
 
@@ -138,6 +138,12 @@ def main():
 		decoder.add(filename = args.output)
 		decoder.decode()
 
+		tiles = decoder.getTiles()
+		idx = 0
+		for tile in tiles:
+			output_fname = os.path.basename(args.output) + '-' + str(idx) + '.' + tile['magic']
+			with open(os.path.join(args.input_files[0], output_fname), 'wb') as f:
+				f.write(tile['data'])
 	else:
 		if not len(args.input_files):
 			print("At least one input tile file must be specified!")

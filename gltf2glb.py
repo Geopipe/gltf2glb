@@ -234,7 +234,6 @@ def main():
 		if len(args.b3dm):
 			with open(args.b3dm, 'r') as f:
 				b3dm_json = json.loads(f.read())
-				print b3dm_json
 				b3dm_encoder.loadJSONBatch(b3dm_json, False)
 
 		with open(fname_out, 'w') as f:
