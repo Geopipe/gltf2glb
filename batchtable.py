@@ -51,8 +51,9 @@ class BatchTable:
 
 		else:
 			self.batch_in = data_in
-
-		self.num_features = len(self.batch_in)
+		if len(self.batch_in):
+			first_key = self.batch_in.keys()[0]
+			self.num_features = len(self.batch_in[first_key])
 
 	def addGlobal(self, key, value):
 		self.batch_in[key] = value
