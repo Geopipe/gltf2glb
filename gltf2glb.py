@@ -17,8 +17,6 @@ import b3dm, i3dm
 
 EMBED_ARR = ['textures', 'shaders']
 BASE64_REGEXP = re.compile(r'^data:.*?;base64,')
-BINARY_EXTENSION = 'KHR_binary_glTF'
-BINARY_BUFFER = 'binary_glTF'			# Cesium is standards-compliant now
 
 class BodyEncoder:
 	""" Encode the binary chunks of the GLB's body """
@@ -35,11 +33,12 @@ class BodyEncoder:
 			uri = BASE64_REGEXP.sub("", uri)
 			buf = bytearray(base64.b64decode(uri))
 		else:
-			with open(os.path.join(self.containing_dir, uri), 'r') as f:
+			with open(os.path.join(self.containing_dir, uri), 'rb') as f:
 				buf = bytearray(f.read())
 
 		# Fix length variable and buffer length
 		length = min(length, len(buf)) if length is not None else len(buf)
+		print("Adding %s (%d of %d)" % (os.path.join(self.containing_dir, uri), length, len(buf)))
 		buf = buf[0:length]
 	
 		# Handle the buffer
@@ -58,7 +57,7 @@ class GLBEncoder:
 
 	def export(self, filename):
 		""" Export the GLB file """
-		with open(filename, 'w') as f:
+		with open(filename, 'wb') as f:
 			f.write(self.exportString())
 
 	def exportString(self):
@@ -67,31 +66,42 @@ class GLBEncoder:
 	
 		# As body is 4-byte-aligned, the scene length must be padded to a multiple of 4
 		padded_scene_len = (scene_len + 3) & ~3
+		padded_body_length = (self.body.body_length + 3) & ~3
 	
 		# Header is 20 bytes
 		body_offset = padded_scene_len + 20
-		file_len = body_offset + self.body.body_length
+		body_offset_data = body_offset + 8
+		file_len = body_offset_data + padded_body_length
 	
 		# Write the header
 		glb_out = bytearray()
 		glb_out.extend(struct.pack('>I', 0x676C5446))		# magic number: "glTF"
-		glb_out.extend(struct.pack('<I', 1))
+		glb_out.extend(struct.pack('<I', 2))
 		glb_out.extend(struct.pack('<I', file_len))
+
+		# JSON chunk
 		glb_out.extend(struct.pack('<I', padded_scene_len))
-		glb_out.extend(struct.pack('<I', 0))
+		glb_out.extend(struct.pack('<I', 0x4E4F534A))
 		glb_out.extend(self.header)
 
 		# Add padding
 		while len(glb_out) < body_offset:
 			glb_out.extend(' ')
-	
+
+		# Binary chunk
+		glb_out.extend(struct.pack('<I', padded_body_length))
+		glb_out.extend(struct.pack('<I', 0x004E4942))
+
 		# Write the body
 		for i in xrange(0, len(self.body.body_parts), 2):
 			offset = self.body.body_parts[i]
 			contents = self.body.body_parts[i + 1]
-			if offset + body_offset != len(glb_out):
+			if offset + body_offset_data != len(glb_out):
 				raise IndexError
 			glb_out.extend(contents)
+			
+		while len(glb_out) < file_len:
+			glb_out.extend([0])
 	
 		return glb_out
 
@@ -105,11 +115,11 @@ def main():
 	parser.add_argument("-c", "--cesium", action="store_true", \
 						help="sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]")
 	parser.add_argument("-i", "--i3dm", type=str, \
-	                    help="Export i3dm, with optional path to JSON instance table data")
+						help="Export i3dm, with optional path to JSON instance table data")
 	parser.add_argument("-b", "--b3dm", type=str, \
-	                    help="Export b3dm, with optional path to JSON batch table data")
+						help="Export b3dm, with optional path to JSON batch table data")
 	parser.add_argument("-o", "--output", required=False, default=None,
-	                    help="Optional output path (defaults to the path of the input file")
+						help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
@@ -123,7 +133,7 @@ def main():
 		print("Failed to create binary GLTF file: input is not *.gltf")
 		sys.exit(-1)
 
-	with open(args.filename, 'r') as f:
+	with open(args.filename, 'rb') as f:
 		gltf = f.read()
 	gltf = gltf.decode('utf-8')
 	scene = json.loads(gltf)
@@ -131,15 +141,9 @@ def main():
 	# Set up body_encoder
 	body_encoder = BodyEncoder(containing_dir = os.path.dirname(args.filename))
 
-	# Let GLTF parser know that it is using the Binary GLTF extension
-	try:
-		scene["extensionsUsed"].append(BINARY_EXTENSION)
-	except (KeyError, TypeError):
-		scene["extensionsUsed"] = [BINARY_EXTENSION]
-
 	# Iterate the buffers in the scene:
-	for buf_id, buf in scene["buffers"].iteritems():
-		buf_type = buf["type"]
+	for buf_id, buf in enumerate(scene["buffers"]):
+		buf_type = buf.get("type",None)
 		if buf_type and buf_type != 'arraybuffer':
 			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
 
@@ -149,6 +153,7 @@ def main():
 			length = None
 
 		offset, length = body_encoder.addToBody(buf["uri"], length)
+		
 		try:
 			buf["extras"]
 		except KeyError:
@@ -157,14 +162,14 @@ def main():
 
 	# Iterate over the bufferViews to
 	# move buffers into the single GLB buffer body
-	for bufview_id, bufview in scene["bufferViews"].iteritems():
+	for bufview_id, bufview in enumerate(scene["bufferViews"]):
 		buf_id = bufview["buffer"]
 		try:
 			referenced_buf = scene["buffers"][buf_id]
 		except KeyError:
 			raise KeyError("Buffer ID reference not found: %s" % (buf_id))
 
-		scene["bufferViews"][bufview_id]["buffer"] = BINARY_BUFFER
+		scene["bufferViews"][bufview_id]["buffer"] = 0
 		try:
 			scene["bufferViews"][bufview_id]["byteOffset"] += referenced_buf["extras"]["byteOffset"]
 		except KeyError:
@@ -177,37 +182,23 @@ def main():
 			del scene["shaders"][shader_id]["uri"]
 
 			offset, length = body_encoder.addToBody(uri, None)
-			bufview_id = BINARY_BUFFER + '_shader_' + str(shader_id)
-			scene["shaders"][shader_id]["extensions"] = \
-				{BINARY_EXTENSION: {'bufferView': bufview_id}}
 
-			scene["bufferViews"][bufview_id] = \
-				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
+			scene["bufferViews"].append({'buffer': 0, 'byteLength': length, 'byteOffset': offset})
+			scene["shaders"][shader_id]["bufferView"] = len(scene["bufferViews"])-1
 
 	# Iterate over images
 	if 'textures' in embed and 'images' in scene:
-		for image_id, image in scene["images"].iteritems():
+		for image_id, image in enumerate(scene["images"]):
 			uri = image["uri"]
-			offset, length = body_encoder.addToBody(uri, None)
-
-			bufview_id = BINARY_BUFFER + '_images_' + str(image_id)
-			# TODO: Add extension properties
-			scene["images"][image_id]["extensions"] = \
-				{BINARY_EXTENSION: {\
-					'bufferView': bufview_id,\
-					'mimeType': 'image/i-dont-know',\
-					'height': 9999,\
-					'width': 9999\
-				}}
 			del scene["images"][image_id]["uri"]
 
-			scene["bufferViews"][bufview_id] = \
-				{'buffer': BINARY_BUFFER, 'byteLength': length, 'byteOffset': offset}
+			offset, length = body_encoder.addToBody(uri, None)
+			
+			scene["bufferViews"].append({'buffer': 0, 'byteLength': length, 'byteOffset': offset})
+			scene["images"][image_id]["bufferView"] = len(scene["bufferViews"])-1
+			scene["images"][image_id]["mimeType"] = "image/png"
 
-	scene["buffers"] = {BINARY_BUFFER:
-	                       {'byteLength': body_encoder.body_length,
-	                       'uri': ''}
-	                   };
+	scene["buffers"] = [{'byteLength': body_encoder.body_length}];
 
 	new_scene_str = bytearray(json.dumps(scene, separators=(',', ':'), sort_keys=True))
 	encoder = GLBEncoder(new_scene_str, body_encoder)
@@ -232,11 +223,11 @@ def main():
 		glb = encoder.exportString()
 		b3dm_encoder = b3dm.B3DM()
 		if len(args.b3dm):
-			with open(args.b3dm, 'r') as f:
+			with open(args.b3dm, 'rb') as f:
 				b3dm_json = json.loads(f.read())
 				b3dm_encoder.loadJSONBatch(b3dm_json, False)
 
-		with open(fname_out, 'w') as f:
+		with open(fname_out, 'wb') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
 	elif args.i3dm != None:
 		raise NotImplementedError
