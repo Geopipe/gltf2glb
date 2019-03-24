@@ -146,3 +146,31 @@ class I3DM:
 		calc_len = struct.calcsize(fmt)
 		self.offset += calc_len
 		return struct.unpack(fmt, data[self.offset - calc_len : self.offset])[0]
+
+def main():
+	""" Generates an i3dm file from a glb plus JSON"""
+
+	# Parse options and get results
+	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
+	parser.add_argument("-i", "--i3dm", type=str, required=True, \
+	                    help="Export i3dm, with required path to input JSON instance table data. Supports only embedded GLBs")
+	parser.add_argument("-g", "--glb", type=str, required=True, \
+	                    help="GLB file to instance and embed in the output i3dm file")
+	parser.add_argument("-o", "--output", required=True, \
+	                    help="Output i3dm path")
+	args = parser.parse_args()
+	
+	i3dm_encoder = I3DM()
+	if not(len(args.i3dm)):
+		raise ValueError("-i/--i3dm requires a JSON instance table")
+	else:
+		with open(args.i3dm, 'r') as f:
+			i3dm_json = json.loads(f.read())
+		i3dm_encoder.loadJSONInstances(i3dm_json)
+
+	with open(args.glb, 'rb') as glb:
+		with open(args.output, 'wb') as f:
+			f.write(i3dm_encoder.writeBinary(glb.read(), True))		# Second arg: embed gltf
+
+if __name__ == "__main__":
+	main()
