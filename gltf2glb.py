@@ -105,9 +105,9 @@ def main():
 	parser.add_argument("-c", "--cesium", action="store_true", \
 						help="sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]")
 	parser.add_argument("-i", "--i3dm", type=str, \
-	                    help="Export i3dm, with optional path to JSON instance table data")
+	                    help="Export i3dm, with required path to input JSON instance table data. Supports only embedded GLTFs")
 	parser.add_argument("-b", "--b3dm", type=str, \
-	                    help="Export b3dm, with optional path to JSON batch table data")
+	                    help="Export b3dm, with optional path to input JSON batch table data")
 	parser.add_argument("-o", "--output", required=False, default=None,
 	                    help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("filename")
@@ -234,12 +234,24 @@ def main():
 		if len(args.b3dm):
 			with open(args.b3dm, 'r') as f:
 				b3dm_json = json.loads(f.read())
-				b3dm_encoder.loadJSONBatch(b3dm_json, False)
+			b3dm_encoder.loadJSONBatch(b3dm_json, False)
 
 		with open(fname_out, 'w') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
+
 	elif args.i3dm != None:
-		raise NotImplementedError
+		glb = encoder.exportString()
+		i3dm_encoder = i3dm.I3DM()
+		if not(len(args.i3dm)):
+			raise ValueError("-i/--i3dm requires a JSON instance table")
+		else:
+			with open(args.i3dm, 'r') as f:
+				i3dm_json = json.loads(f.read())
+			i3dm_encoder.loadJSONInstances(i3dm_json)
+
+		with open(fname_out, 'w') as f:
+			f.write(i3dm_encoder.writeBinary(glb, True))		# Second arg: embed gltf
+
 	else:
 		encoder.export(fname_out)
 
