@@ -124,3 +124,9 @@ class B3DM:
 		calc_len = struct.calcsize(fmt)
 		self.offset += calc_len
 		return struct.unpack(fmt, data[self.offset - calc_len : self.offset])[0]
+
+def main():
+	raise NotImplementedError("This file cannot be used directly!")
+
+if __name__ == "__main__":
+	main()

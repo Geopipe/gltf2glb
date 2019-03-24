@@ -2,7 +2,7 @@
 
 #--------------------------------------------------
 # batchtable.py: Component of GLTF to GLB converter
-# (c) 2016 Geopipe, Inc.
+# (c) 2016 - 2019 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #--------------------------------------------------
 
@@ -37,6 +37,8 @@ class BatchTable:
 		if object_wise:
 			n_objs = len(data_in)
 			# Find all the fields for all the objects
+			if type(data_in) is list:
+				data_in = {i: data_in[i] for i in xrange(len(data_in))}
 			for obj, objval in data_in.iteritems():
 				obj = int(obj)
 
@@ -55,17 +57,16 @@ class BatchTable:
 			first_key = self.batch_in.keys()[0]
 			self.num_features = len(self.batch_in[first_key])
 
-	def addGlobal(self, key, value):
-		self.batch_in[key] = value
-		self.num_features += 1
-
 	def writeOutput(self):
 		data_out = {}
 		# TODO: Add proper encoding to JSON + binary, rather than just
 		# punting to the naive method
 		data_out = self.batch_in
 		self.batch_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True))
+
+		# TODO: Why do we clear this?
 		self.batch_in = bytearray()
+		self.num_features = 0
 
 	def finalize(self):
 		# Create the actual batch JSON (and binary)

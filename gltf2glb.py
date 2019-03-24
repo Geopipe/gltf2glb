@@ -2,7 +2,7 @@
 
 #------------------------------------
 # gltf2glb.py: GLTF to GLB converter
-# (c) 2016 Geopipe, Inc.
+# (c) 2016 - 2019 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #------------------------------------
 
