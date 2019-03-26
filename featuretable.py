@@ -27,9 +27,9 @@ class FeatureTable(BatchTable):
 		data_out = {}
 		# TODO: Add proper encoding to JSON + binary, rather than just
 		# punting to the naive method
-		data_out = self.batch_in
-		data_out.update(self.features_global)
-		print data_out
+		data_out = self.features_global
+		data_out.update(self.batch_in)
+		
 		self.features_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True))
 		
 		# TODO: Why do we clear these?

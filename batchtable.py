@@ -87,3 +87,20 @@ class BatchTable:
 
 	def getNumFeatures(self):
 		return self.num_features
+
+	""" A few utiities """
+	def nestedListToBin(self, val, val_type):
+		if type(val) is list:
+			output = bytearray()
+			for item in val:
+				output.extend(self.nestedListToBin(item, val_type))
+			return output
+		else:
+			if val_type == 'f32':
+				return struct.pack('<f', val)
+			elif val_type == 'u16':
+				return struct.pack('<H', val)
+			else:
+				raise TypeError("Don't know how to pack type '%s'" % val_type)
+
+	

@@ -27,10 +27,34 @@ I3DM_MAGIC = 'i3dm'
 I3DM_VERSION = 1
 I3DM_HEADER_LEN = 32
 
+class InstanceFeatureTable(FeatureTable):
+	def __init__(self):
+		FeatureTable.__init__(self)
+		
+	def finalize(self):
+		new_batch_in = {}
+		for key, val in self.batch_in.iteritems():
+			offset = len(self.features_bin)
+			
+			buf_bin = None
+			if key in ['POSITION', 'NORMAL_UP', 'NORMAL_RIGHT', 'SCALE', 'SCALE_NON_UNIFORM']:
+				buf_bin = self.nestedListToBin(val, 'f32')
+			elif key in ['POSITION_QUANTIZED', 'NORMAL_UP_OCT32P', 'NORMAL_RIGHT_OCT32P', 'BATCH_ID']:
+				buf_bin = self.nestedListToBin(val, 'u16')
+			else:
+				raise KeyError("'%s' is not a valid instance semantic" % key)
+
+			new_batch_in[key] = {'byteOffset': offset}
+			self.features_bin.extend(buf_bin)
+			
+		self.batch_in = new_batch_in
+
+		FeatureTable.finalize(self)
+
 class I3DM:
 	def __init__(self):
 		self.batch_table = BatchTable()
-		self.feature_table = FeatureTable()
+		self.feature_table = InstanceFeatureTable()
 		self.gltf_bin = bytearray()
 
 	def loadJSONBatch(self, data_in, object_wise = True):
@@ -82,8 +106,8 @@ class I3DM:
 
 	# If embed_gltf is false, gltf_bin is a URI string instead of GLTF data
 	def writeHeader(self, gltf_bin, num_batch_features, num_feature_features):
-		len_feature_json = len(self.feature_table.getBatchJSON())
-		len_feature_bin  = len(self.feature_table.getBatchBin())
+		len_feature_json = len(self.feature_table.getFeatureJSON())
+		len_feature_bin  = len(self.feature_table.getFeatureBin())
 		len_batch_json   = len(self.batch_table.getBatchJSON())
 		len_batch_bin    = len(self.batch_table.getBatchBin())
 
@@ -100,7 +124,7 @@ class I3DM:
 		output.extend(struct.pack('<I', len_feature_bin))
 		output.extend(struct.pack('<I', len_batch_json))
 		output.extend(struct.pack('<I', len_batch_bin))
-		output.extend(struct.pack('<I', 0 if self.embed_gltf else 1))
+		output.extend(struct.pack('<I', 1 if self.embed_gltf else 0))
 	
 		# Sanity check
 		if (len(output) != I3DM_HEADER_LEN):
@@ -125,8 +149,7 @@ class I3DM:
 		self.version = self.unpack('<I', data)
 
 		if self.magic != I3DM_MAGIC or self.version > I3DM_VERSION:
-			print("Unrecognized magic %s or bad version %d" % (self.magic, self.version))
-			raise IOError
+			raise IOError("Unrecognized magic %s or bad version %d" % (self.magic, self.version))
 
 		self.length           = self.unpack('<I', data)
 		self.len_feature_json = self.unpack('<I', data)
