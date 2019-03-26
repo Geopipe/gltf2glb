@@ -3,7 +3,7 @@ GLTF to Binary GLTF (GLB) Converter
 
 Created by Christopher Mitchell, Ph.D. et alia of Geopipe, Inc.
 
-This project was inspired by https://github.com/Qantas94Heavy/binary-gltf-utils and started as a direct Javascript-to-Python port with a bunch of bugfixes. It implements `b3dm` headers for Cesium 3D Tiles, and will soon implement `i3dm` as well. It also includes a `packcmpt` tool for combining one or more `i3dm`/`b3dm` models into a single `cmpt` file.
+This project was inspired by https://github.com/Qantas94Heavy/binary-gltf-utils and started as a direct Javascript-to-Python port with a bunch of bugfixes. It can create both b3dm and i3dm files for Cesium 3D Tiles. It also includes a `packcmpt` tool for combining one or more `i3dm`/`b3dm` models into a single `cmpt` file.
 
 Usage
 -----
@@ -42,7 +42,21 @@ optional arguments:
   -o OUTPUT, --output OUTPUT    Output cmpt file
   -u                            Unpack the output CMPT file instead of creating it (incomplete)
 ```
+### i3dm ###
+```
+$ ./i3dm.py -h
+usage: usage: i3dm.py [-h] -i I3DM -g GLB -o OUTPUT
+
+Generate an i3dm file from JSON describing instances, and a GLB to instance
+
+required arguments:
+  -i, --i3dm					JSON for instance semantics
+  -g, --glb						Path to GLB file to instance
+  -o, --output					Path to i3dm file to output
+
+optional arguments:
+  -h, --help                    show this help message and exit
 
 License
 -------
-(c) 2016-2018 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.
+(c) 2016-2019 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.
