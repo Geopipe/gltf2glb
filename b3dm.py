@@ -41,11 +41,11 @@ class B3DM:
 		output = self.writeHeader(gltf_bin, num_batch_features, num_feature_features)
 
 		# Add the feature table JSON to the output
-		feature_json = self.feature_table.getBatchJSON()
+		feature_json = self.feature_table.getFeatureJSON()
 		output.extend(feature_json)
 
-		# Add the batch table binary to the output
-		feature_bin  = self.feature_table.getBatchBin()
+		# Add the feature table binary to the output
+		feature_bin  = self.feature_table.getFeatureBin()
 		output.extend(feature_bin)
 
 		# Add the batch table JSON to the output
@@ -62,8 +62,8 @@ class B3DM:
 		return output
 
 	def writeHeader(self, gltf_bin, num_feature_features, num_batch_features):
-		len_feature_json = len(self.feature_table.getBatchJSON())
-		len_feature_bin  = len(self.feature_table.getBatchBin())
+		len_feature_json = len(self.feature_table.getFeatureJSON())
+		len_feature_bin  = len(self.feature_table.getFeatureBin())
 		len_batch_json   = len(self.batch_table.getBatchJSON())
 		len_batch_bin    = len(self.batch_table.getBatchBin())
 
@@ -104,8 +104,7 @@ class B3DM:
 		self.version = self.unpack('<I', data)
 
 		if self.magic != B3DM_MAGIC or self.version > B3DM_VERSION:
-			print("Unrecognized magic %s or bad version %d" % (self.magic, self.version))
-			raise IOError
+			raise IOError("Unrecognized magic %s or bad version %d" % (self.magic, self.version))
 
 		self.length           = self.unpack('<I', data)
 		self.len_feature_json = self.unpack('<I', data)

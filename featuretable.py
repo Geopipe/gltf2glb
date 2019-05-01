@@ -29,7 +29,6 @@ class FeatureTable(BatchTable):
 		# punting to the naive method
 		data_out = self.features_global
 		data_out.update(self.batch_in)
-		
 		self.features_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True))
 		
 		# TODO: Why do we clear these?
