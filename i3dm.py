@@ -177,6 +177,8 @@ def main():
 	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
 	parser.add_argument("-i", "--i3dm", type=str, required=True, \
 	                    help="Export i3dm, with required path to input JSON instance table data. Supports only embedded GLBs")
+	parser.add_argument("-b", "--batch", type=str, required=False, \
+	                    help="Optional path to batch table JSON")
 	parser.add_argument("-g", "--glb", type=str, required=True, \
 	                    help="GLB file to instance and embed in/link from the output i3dm file")
 	parser.add_argument("-e", "--embed", action="store_true", \
@@ -192,6 +194,10 @@ def main():
 		with open(args.i3dm, 'r') as f:
 			i3dm_json = json.loads(f.read())
 		i3dm_encoder.loadJSONInstances(i3dm_json)
+		if len(args.batch):
+			with open(args.batch, 'r') as f:
+				batch_json = json.loads(f.read())
+			i3dm_encoder.loadJSONBatch(batch_json, False)
 
 	with open(args.output, 'wb') as f:
 		if args.embed:
