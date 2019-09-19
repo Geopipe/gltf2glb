@@ -138,14 +138,17 @@ def main():
 		scene["extensionsUsed"] = [BINARY_EXTENSION]
 
 	# Iterate the buffers in the scene:
-	for buf_id, buf in scene["buffers"].iteritems():
-		buf_type = buf["type"]
-		if buf_type and buf_type != 'arraybuffer':
-			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
+	for buf in scene["buffers"]:
+		try:
+			buf_type = buf["type"]
+			if buf_type != 'arraybuffer':
+				raise TypeError("Buffer type %s not supported" % (buf_type))
+		except KeyError:
+			pass
 
 		try:
 			length = buf["byteLength"]
-		except:
+		except KeyError:
 			length = None
 
 		offset, length = body_encoder.addToBody(buf["uri"], length)
@@ -157,18 +160,18 @@ def main():
 
 	# Iterate over the bufferViews to
 	# move buffers into the single GLB buffer body
-	for bufview_id, bufview in scene["bufferViews"].iteritems():
-		buf_id = bufview["buffer"]
+	for i in xrange(len(scene["bufferViews"])):
+		bufview = scene["bufferViews"][i]
 		try:
-			referenced_buf = scene["buffers"][buf_id]
+			referenced_buf = scene["buffers"][bufview]
 		except KeyError:
-			raise KeyError("Buffer ID reference not found: %s" % (buf_id))
+			raise KeyError("Buffer ID reference not found: %s" % (i))
 
-		scene["bufferViews"][bufview_id]["buffer"] = BINARY_BUFFER
+		scene["bufferViews"][i]["buffer"] = BINARY_BUFFER
 		try:
-			scene["bufferViews"][bufview_id]["byteOffset"] += referenced_buf["extras"]["byteOffset"]
+			scene["bufferViews"][i]["byteOffset"] += referenced_buf["extras"]["byteOffset"]
 		except KeyError:
-			scene["bufferViews"][bufview_id]["byteOffset"] = referenced_buf["extras"]["byteOffset"]
+			scene["bufferViews"][i]["byteOffset"] = referenced_buf["extras"]["byteOffset"]
 
 	# Iterate over the shaders
 	if 'shaders' in embed and 'shaders' in scene:
