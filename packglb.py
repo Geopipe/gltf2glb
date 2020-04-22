@@ -24,6 +24,8 @@ def main():
 	                    help="Export i3dm, with required path to input JSON instance table data. Supports only embedded GLTFs")
 	parser.add_argument("-b", "--b3dm", type=str, \
 	                    help="Export b3dm, with optional path to input JSON batch table data")
+        parser.add_argument("--objectwise", action='store_true', \
+                            help="If b3dm is specified and this is set, assume list of dicts. Defaults otherwise to dict of lists")
 	parser.add_argument("-o", "--output", required=False, default=None, \
 	                    help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("-u", "--unpack", action='store_true', \
@@ -71,7 +73,7 @@ def main():
 			with open(args.b3dm, 'r') as f:
 				b3dm_json = json.loads(f.read())
 				#print b3dm_json
-				b3dm_encoder.loadJSONBatch(b3dm_json, False)
+				b3dm_encoder.loadJSONBatch(b3dm_json, args.objectwise)
 
 		with open(fname_out, 'w') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
