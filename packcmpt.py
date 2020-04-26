@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-
-#------------------------------------
-# packcmpt.py: CMPT file creator, to
-# pack multiple Tile3D files into a
-# single package.
-# Component of gltf2glb
-# (c) 2016-2017 Geopipe, Inc.
+#---------------------------------------------------------------------
+# packcmpt.py: CMPT file creator, to pack multiple Tile3D files into a
+# single package. Component of gltf2glb.
+# (c) 2016-2020 Geopipe, Inc.
 # All rights reserved. See LICENSE.
-#------------------------------------
+#---------------------------------------------------------------------
 
 import sys, os
 import argparse
