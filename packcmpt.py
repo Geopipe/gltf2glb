@@ -14,7 +14,7 @@ CMPT_EXT = '.cmpt'
 CMPT_MAGIC = 'cmpt'
 CMPT_VERSION = 1
 CMPT_HEADER_LEN = 16
-VALID_INTERIOR_TILES = ['b3dm', 'i3dm', 'cmpt']
+VALID_INTERIOR_TILES = ['b3dm', 'i3dm', 'cmpt', 'pnts']
 
 class CmptEncoder:
 	""" Pack multiple Tile3D file(s) into a single unit """
