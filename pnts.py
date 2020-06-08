@@ -8,16 +8,30 @@
 
 import struct
 from batchtable import BatchTable
-from featuretable import FeatureTable
+from featuretable import InstanceFeatureTable
 
 PNTS_MAGIC = 'pnts'
 PNTS_VERSION = 1
 PNTS_HEADER_LEN = 28
 
-class PNTS:
+PNTS_SEMANTICS = {
+	'POSITION' : 'f32',
+	'NORMAL' : 'f32',
+	
+	'POSITION_QUANTIZED' : 'u16',
+	# this might get us in to trouble since it can actually also be u8 or u32
+	'BATCH_ID' : 'u16',
+	'RGB565' : 'u16',
+	
+	'NORMAL_OCT16P' : 'u8',
+	'RGBA' : 'u8',
+	'RGB' : 'u8'	
+}
+
+class PNTS(object):
 	def __init__(self):
 		self.batch_table = BatchTable()
-		self.feature_table = FeatureTable()
+		self.feature_table = InstanceFeatureTable(PNTS_SEMANTICS)
 
 	def loadJSONBatch(self, data_in, object_wise = True):
 		self.batch_table.loadJSONBatch(data_in, object_wise)
@@ -32,12 +46,13 @@ class PNTS:
 		num_batch_features = max(num_batch_features, self.batch_table.getNumFeatures())
 		self.feature_table.addGlobal('BATCH_LENGTH', num_batch_features)
 		num_feature_features = max(num_feature_features, self.feature_table.getNumFeatures())
+		self.feature_table.addGlobal('POINTS_LENGTH', num_feature_features)
 
 		self.batch_table.finalize()
 		self.feature_table.finalize()
 
 		# Generate the header
-		output = self.writeHeader(gltf_bin, num_batch_features, num_feature_features)
+		output = self.writeHeader(num_batch_features, num_feature_features)
 
 		# Add the feature table JSON to the output
 		feature_json = self.feature_table.getFeatureJSON()
@@ -57,7 +72,7 @@ class PNTS:
 
 		return output
 
-	def writeHeader(self, gltf_bin, num_feature_features, num_batch_features):
+	def writeHeader(self, num_feature_features, num_batch_features):
 		len_feature_json = len(self.feature_table.getFeatureJSON())
 		len_feature_bin  = len(self.feature_table.getFeatureBin())
 		len_batch_json   = len(self.batch_table.getBatchJSON())
@@ -65,8 +80,7 @@ class PNTS:
 
 		length = PNTS_HEADER_LEN + \
 		         len_feature_json + len_feature_bin + \
-		         len_batch_json   + len_batch_bin + \
-		         len(gltf_bin)
+		         len_batch_json   + len_batch_bin
 	
 		output = bytearray()
 		output.extend(PNTS_MAGIC)

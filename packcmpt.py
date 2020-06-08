@@ -14,7 +14,7 @@ CMPT_EXT = '.cmpt'
 CMPT_MAGIC = 'cmpt'
 CMPT_VERSION = 1
 CMPT_HEADER_LEN = 16
-VALID_INTERIOR_TILES = ['b3dm', 'i3dm', 'cmpt', 'pnts']
+VALID_INTERIOR_TILES = {'b3dm', 'i3dm', 'cmpt', 'pnts'}
 
 class CmptEncoder:
 	""" Pack multiple Tile3D file(s) into a single unit """
@@ -26,7 +26,6 @@ class CmptEncoder:
 	def add(self, filename):
 		with open(filename, 'r') as f:
 			content = f.read()
-
 		# All interior tiles have a four-character extension
 		_, ext = os.path.splitext(filename)		# Get the extension
 		ext = ext[1:]							# Remove the .
@@ -38,26 +37,34 @@ class CmptEncoder:
 		if ext not in VALID_INTERIOR_TILES:
 			print("Extension '%s' ('%s') not recognized as valid tile type" % (ext, filename))
 			raise NameError
-
+		
+		return self.add_content(content)
+		
+	def add_content(self, content):
 		self.body.extend(content)							# Tile contents
 
 		self.tile_count += 1
 
 	def composeHeader(self):
-		self.header.extend(CMPT_MAGIC)							# Magic
-		self.header.extend(struct.pack('<I', 1))				# Version
-		self.header.extend(struct.pack('<I', CMPT_HEADER_LEN + len(self.body)))
-		self.header.extend(struct.pack('<I', self.tile_count))	# Number of tiles
+		header = bytearray() # start with a fresh header!
+		header.extend(CMPT_MAGIC)						# Magic
+		header.extend(struct.pack('<I', 1))				# Version
+		header.extend(struct.pack('<I', CMPT_HEADER_LEN + len(self.body)))
+		header.extend(struct.pack('<I', self.tile_count))	# Number of tiles
 
-		if len(self.header) != CMPT_HEADER_LEN:
-			print("Unexpected header size!")
-			raise ArithmeticError
+		if len(header) != CMPT_HEADER_LEN:
+			raise ArithmeticError("Unexpected header size!")
+		else:
+			self.header = header
 
 	def export(self, filename):
-		self.composeHeader()
 		with open(filename, 'wb') as f:
-			f.write(self.header)
-			f.write(self.body)
+			self.export_to_handle(f)
+			
+	def export_to_handle(self, handle):
+		self.composeHeader()
+		handle.write(self.header)
+		handle.write(self.body)
 
 class CmptDecoder:
 	""" Pack multiple Tile3D file(s) into a single unit """

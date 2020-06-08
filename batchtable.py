@@ -8,6 +8,7 @@
 
 import struct
 import json
+import numpy as np
 
 class BatchTable:
 	def __init__(self):
@@ -88,19 +89,21 @@ class BatchTable:
 	def getNumFeatures(self):
 		return self.num_features
 
-	""" A few utiities """
+	""" A few utilities """
 	def nestedListToBin(self, val, val_type):
+		val_codes = {'f32' : 'f','u16':'H'}
+		if val_type not in val_codes:
+			raise TypeError("Don't know how to pack type '%s'" % val_type)
+		else:
+			val_code = val_codes[val_type]
 		if type(val) is list:
 			output = bytearray()
 			for item in val:
 				output.extend(self.nestedListToBin(item, val_type))
 			return output
+		elif type(val) is np.ndarray:
+			return bytearray(val.astype(val_code).tobytes())
 		else:
-			if val_type == 'f32':
-				return struct.pack('<f', val)
-			elif val_type == 'u16':
-				return struct.pack('<H', val)
-			else:
-				raise TypeError("Don't know how to pack type '%s'" % val_type)
+			return struct.pack('<%s' % val_code, val)	
 
 	

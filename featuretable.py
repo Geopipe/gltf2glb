@@ -53,3 +53,26 @@ class FeatureTable(BatchTable):
 
 	def getFeatureBin(self):
 		return self.features_bin
+
+class InstanceFeatureTable(FeatureTable):
+	def __init__(self, instance_semantics):
+		FeatureTable.__init__(self)
+		self.instance_semantics = instance_semantics
+		
+	def finalize(self):
+		new_batch_in = {}
+		for key, val in self.batch_in.iteritems():
+			offset = len(self.features_bin)
+			
+			buf_bin = None
+			if key in self.instance_semantics:
+				buf_bin = self.nestedListToBin(val, self.instance_semantics[key])
+			else:
+				raise KeyError("'%s' is not a valid instance semantic" % key)
+
+			new_batch_in[key] = {'byteOffset': offset}
+			self.features_bin.extend(buf_bin)
+			
+		self.batch_in = new_batch_in
+
+		FeatureTable.finalize(self)
