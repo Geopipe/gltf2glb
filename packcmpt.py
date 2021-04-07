@@ -77,11 +77,11 @@ class CmptDecoder:
 
 	def decode(self):
 		# Grab the header
-		self.offset = 0;
+		self.offset = 0
 		magic = self.unpack('4s', self.data)
 		version = self.unpack('<I', self.data)
 
-		if magic != CMPT_MAGIC or version > CMPT_VERSION:
+		if magic.decode("ascii") != CMPT_MAGIC or version > CMPT_VERSION:
 			print("Unrecognized magic string %s or bad version %d" % (magic, version))
 			raise IOError
 
@@ -95,7 +95,7 @@ class CmptDecoder:
 
 			# All the possible inner tile items have a byte count in the same place.
 			inner_magic = self.unpack('4s', self.data)
-			if inner_magic not in VALID_INTERIOR_TILES:
+			if inner_magic.decode("ascii") not in VALID_INTERIOR_TILES:
 				print("Unrecognized interior tile magic %s" % (inner_magic))
 			inner_version = self.unpack('<I', self.data)
 			inner_length = self.unpack('<I', self.data)
@@ -105,7 +105,7 @@ class CmptDecoder:
 				'version': inner_version, \
 				'length': inner_length, \
 				'data': self.data[start_idx : start_idx + inner_length] \
-			});
+			})
 			self.offset = start_idx + inner_length
 
 		del self.data
@@ -138,9 +138,10 @@ def main():
 		tiles = decoder.getTiles()
 		idx = 0
 		for tile in tiles:
-			output_fname = os.path.basename(args.output) + '-' + str(idx) + '.' + tile['magic']
-			with open(os.path.join(args.input_files[0], output_fname), 'wb') as f:
+			output_fname = os.path.basename(args.output) + '-' + str(idx) + '.' + tile['magic'].decode('ascii')
+			with open(output_fname, 'wb') as f:
 				f.write(tile['data'])
+			idx += 1
 	else:
 		if not len(args.input_files):
 			print("At least one input tile file must be specified!")
