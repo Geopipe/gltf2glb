@@ -21,40 +21,28 @@ import argparse
 import json
 
 from batchtable import BatchTable
-from featuretable import FeatureTable
+from featuretable import InstanceFeatureTable
 
 I3DM_MAGIC = 'i3dm'
 I3DM_VERSION = 1
 I3DM_HEADER_LEN = 32
 
-class InstanceFeatureTable(FeatureTable):
-	def __init__(self):
-		FeatureTable.__init__(self)
-		
-	def finalize(self):
-		new_batch_in = {}
-		for key, val in self.batch_in.iteritems():
-			offset = len(self.features_bin)
-			
-			buf_bin = None
-			if key in ['POSITION', 'NORMAL_UP', 'NORMAL_RIGHT', 'SCALE', 'SCALE_NON_UNIFORM']:
-				buf_bin = self.nestedListToBin(val, 'f32')
-			elif key in ['POSITION_QUANTIZED', 'NORMAL_UP_OCT32P', 'NORMAL_RIGHT_OCT32P', 'BATCH_ID']:
-				buf_bin = self.nestedListToBin(val, 'u16')
-			else:
-				raise KeyError("'%s' is not a valid instance semantic" % key)
+I3DM_SEMANTICS = {
+	'POSITION' : 'f32',
+	'NORMAL_UP' : 'f32',
+	'NORMAL_RIGHT' : 'f32',
+	'SCALE' : 'f32',
+	'SCALE_NON_UNIFORM' : 'f32',
+	'POSITION_QUANTIZED' : 'u16',
+	'NORMAL_UP_OCT32P' : 'u16',
+	'NORMAL_RIGHT_OCT32P' : 'u16',
+	'BATCH_ID' : 'u16'
+}
 
-			new_batch_in[key] = {'byteOffset': offset}
-			self.features_bin.extend(buf_bin)
-			
-		self.batch_in = new_batch_in
-
-		FeatureTable.finalize(self)
-
-class I3DM:
+class I3DM(object):
 	def __init__(self):
 		self.batch_table = BatchTable()
-		self.feature_table = InstanceFeatureTable()
+		self.feature_table = InstanceFeatureTable(I3DM_SEMANTICS)
 		self.gltf_bin = bytearray()
 
 	def loadJSONBatch(self, data_in, object_wise = True):
