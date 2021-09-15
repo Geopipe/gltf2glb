@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 #--------------------------------------------
-# b3dm.py: Component of GLTF to GLB converter
-# (c) 2016 Geopipe, Inc.
+# pnts.py: Component of GLTF to GLB converter
+# (c) 2020 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #--------------------------------------------
 
