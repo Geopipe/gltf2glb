@@ -91,7 +91,7 @@ class BatchTable:
 
 	""" A few utilities """
 	def nestedListToBin(self, val, val_type):
-		val_codes = {'f32' : 'f','u16':'H'}
+		val_codes = {'f32' : 'f', 'u16' : 'H', 'u8' : 'B'}
 		if val_type not in val_codes:
 			raise TypeError("Don't know how to pack type '%s'" % val_type)
 		else:
