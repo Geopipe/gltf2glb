@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #------------------------------------
 # packglb.py: GLB to I3DM/B3DM converter

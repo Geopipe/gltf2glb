@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #--------------------------------------------------
 # batchtable.py: Component of GLTF to GLB converter

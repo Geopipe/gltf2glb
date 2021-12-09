@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #------------------------------------
 # gltf2glb.py: GLTF to GLB converter

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #---------------------------------------------------------------------
 # packcmpt.py: CMPT file creator, to pack multiple Tile3D files into a
 # single package. Component of gltf2glb.
