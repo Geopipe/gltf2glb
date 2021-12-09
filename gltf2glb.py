@@ -123,9 +123,9 @@ def main():
 		print("Failed to create binary GLTF file: input is not *.gltf")
 		sys.exit(-1)
 
-	with open(args.filename, 'r') as f:
+	with open(args.filename, mode = 'r', encoding='utf-8') as f:
 		gltf = f.read()
-	gltf = gltf.decode('utf-8')
+	#gltf = gltf.decode('utf-8')
 	scene = json.loads(gltf)
 
 	# Set up body_encoder
@@ -138,7 +138,7 @@ def main():
 		scene["extensionsUsed"] = [BINARY_EXTENSION]
 
 	# Iterate the buffers in the scene:
-	for buf_id, buf in scene["buffers"].iteritems():
+	for buf_id, buf in iter(scene["buffers"].items()):
 		buf_type = buf["type"]
 		if buf_type and buf_type != 'arraybuffer':
 			raise TypeError("Buffer type %s not supported: %s" % (buf_type, buf_id))
