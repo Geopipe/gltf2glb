@@ -108,7 +108,7 @@ class I3DM(object):
 		         len(gltf_bin)
 	
 		output = bytearray()
-		output.extend(I3DM_MAGIC.encode('ascii'))
+		output.extend(I3DM_MAGIC.encode('utf-8'))
 		output.extend(struct.pack('<I', I3DM_VERSION))
 		output.extend(struct.pack('<I', length))
 		output.extend(struct.pack('<I', len_feature_json))
@@ -136,7 +136,7 @@ class I3DM(object):
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
-		self.magic = self.unpack('4s', data).decode('ascii')
+		self.magic = self.unpack('4s', data).decode('utf-8')
 		self.version = self.unpack('<I', data)
 
 		if self.magic != I3DM_MAGIC or self.version > I3DM_VERSION:

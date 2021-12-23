@@ -64,7 +64,7 @@ class InstanceFeatureTable(FeatureTable):
 		
 	def finalize(self):
 		new_batch_in = {}
-		for key, val in iter(self.batch_in.items()):
+		for key, val in self.batch_in.items():
 			offset = len(self.features_bin)
 			
 			buf_bin = None

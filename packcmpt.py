@@ -47,7 +47,7 @@ class CmptEncoder:
 
 	def composeHeader(self):
 		header = bytearray() # start with a fresh header!
-		header.extend(CMPT_MAGIC.encode('ascii'))		# Magic
+		header.extend(CMPT_MAGIC.encode('utf-8'))		# Magic
 		header.extend(struct.pack('<I', 1))				# Version
 		header.extend(struct.pack('<I', CMPT_HEADER_LEN + len(self.body)))
 		header.extend(struct.pack('<I', self.tile_count))	# Number of tiles
@@ -85,7 +85,7 @@ class CmptDecoder:
 	def decode(self):
 		# Grab the header
 		self.offset = 0;
-		magic = self.unpack('4s', self.data).decode('ascii')
+		magic = self.unpack('4s', self.data).decode('utf-8')
 		version = self.unpack('<I', self.data)
 
 		if magic != CMPT_MAGIC or version > CMPT_VERSION:
@@ -100,7 +100,7 @@ class CmptDecoder:
 			start_idx = self.offset
 
 			# All the possible inner tile items have a byte count in the same place.
-			inner_magic = self.unpack('4s', self.data).decode('ascii')
+			inner_magic = self.unpack('4s', self.data).decode('utf-8')
 			if inner_magic not in VALID_INTERIOR_TILES:
 				print("Unrecognized interior tile magic %s" % (inner_magic))
 			inner_version = self.unpack('<I', self.data)

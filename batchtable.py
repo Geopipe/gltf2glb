@@ -40,11 +40,11 @@ class BatchTable:
 			# Find all the fields for all the objects
 			if type(data_in) is list:
 				data_in = {i: data_in[i] for i in range(len(data_in))}
-			for obj, objval in iter(data_in.items()):
+			for obj, objval in data_in.items():
 				obj = int(obj)
 
 				# Add this object's key-vals
-				for key, val in iter(objval.items()):
+				for key, val in objval.items():
 					if not key in self.batch_in:
 						self.batch_in[key] = [None] * n_objs
 
@@ -55,7 +55,7 @@ class BatchTable:
 		else:
 			self.batch_in = data_in
 		if len(self.batch_in):
-			first_key = list(self.batch_in.keys())[0]
+			first_key = next(iter(self.batch_in))
 			self.num_features = len(self.batch_in[first_key])
 
 	def writeOutput(self):
