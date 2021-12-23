@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #------------------------------------
 # packglb.py: GLB to I3DM/B3DM converter
-# (c) 2018 Geopipe, Inc.
+# (c) 2018 - 2021 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #------------------------------------
 
@@ -16,7 +16,7 @@ import struct
 import b3dm, i3dm
 
 def main():
-	""" Convert GLTF to GLB, with optional additional I3DM or B3DM encoding"""
+	""" Pack GLB into another container, with optional additional I3DM or B3DM encoding"""
 
 	# Parse options and get results
 	parser = argparse.ArgumentParser(description='Converts GLTF to GLB')
@@ -24,8 +24,8 @@ def main():
 	                    help="Export i3dm, with required path to input JSON instance table data. Supports only embedded GLTFs")
 	parser.add_argument("-b", "--b3dm", type=str, \
 	                    help="Export b3dm, with optional path to input JSON batch table data")
-        parser.add_argument("--objectwise", action='store_true', \
-                            help="If b3dm is specified and this is set, assume list of dicts. Defaults otherwise to dict of lists")
+	parser.add_argument("--objectwise", action='store_true', \
+	                    help="If b3dm is specified and this is set, assume list of dicts. Defaults otherwise to dict of lists")
 	parser.add_argument("-o", "--output", required=False, default=None, \
 	                    help="Optional output path (defaults to the path of the input file")
 	parser.add_argument("-u", "--unpack", action='store_true', \
@@ -33,14 +33,25 @@ def main():
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
-	if args.b3dm and args.unpack and args.filename:
-		b3dm_decoder = b3dm.B3DM()
-		with open(args.filename, 'rb') as f:
-			data = f.read()
-			b3dm_decoder.readBinary(data)
-		with open(args.filename + '.glb', 'wb') as f:
-			output_data = b3dm_decoder.getGLTFBin()
-			f.write(output_data)
+	if args.unpack and args.filename:
+		if args.b3dm:
+			b3dm_decoder = b3dm.B3DM()
+			with open(args.filename, 'rb') as f:
+				data = f.read()
+				b3dm_decoder.readBinary(data)
+			with open(args.filename + '.glb', 'wb') as f:
+				output_data = b3dm_decoder.getGLTFBin()
+				f.write(output_data)
+		elif args.i3dm:
+			i3dm_decoder = i3dm.I3DM()
+			with open(args.filename, 'rb') as f:
+				data = f.read()
+				i3dm_decoder.readBinary(data)
+			with open(args.filename + '.glb', 'wb') as f:
+				output_data = i3dm_decoder.getGLTFBin()
+				f.write(output_data)
+		else:
+			raise ValueError('Must specify -b (--b3dm) or -i (--i3dm) to unpack')
 		sys.exit(0)
 
 	# Make sure the input file is *.glb
@@ -48,7 +59,7 @@ def main():
 		print("Failed to create packed binary GLB file: input is not *.glb")
 		sys.exit(-1)
 
-	with open(args.filename, 'r') as f:
+	with open(args.filename, 'rb') as f:
 		glb = f.read()
 
 	if args.b3dm != None:
@@ -75,7 +86,7 @@ def main():
 				#print b3dm_json
 				b3dm_encoder.loadJSONBatch(b3dm_json, args.objectwise)
 
-		with open(fname_out, 'w') as f:
+		with open(fname_out, 'wb') as f:
 			f.write(b3dm_encoder.writeBinary(glb))
 
 	elif args.i3dm != None:
@@ -87,12 +98,12 @@ def main():
 				i3dm_json = json.loads(f.read())
 			i3dm_encoder.loadJSONInstances(i3dm_json, False)
 
-		with open(fname_out, 'w') as f:
+		with open(fname_out, 'wb') as f:
 			f.write(i3dm_encoder.writeBinary(glb, True))		# Second arg: embed gltf
 
 	else:
 		# This is kinda pointless
-		with open(fname_out, 'w') as f:
+		with open(fname_out, 'wb') as f:
 			f.write(glb)
 
 if __name__ == "__main__":
