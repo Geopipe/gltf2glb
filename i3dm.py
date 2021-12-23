@@ -136,7 +136,7 @@ class I3DM(object):
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
-		self.magic = self.unpack('4s', data)
+		self.magic = self.unpack('4s', data).decode('ascii')
 		self.version = self.unpack('<I', data)
 
 		if self.magic != I3DM_MAGIC or self.version > I3DM_VERSION:

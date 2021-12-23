@@ -100,7 +100,7 @@ class B3DM:
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
-		self.magic = self.unpack('4s', data)
+		self.magic = self.unpack('4s', data).decode('ascii')
 		self.version = self.unpack('<I', data)
 
 		if self.magic != B3DM_MAGIC or self.version > B3DM_VERSION:

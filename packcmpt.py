@@ -85,12 +85,11 @@ class CmptDecoder:
 	def decode(self):
 		# Grab the header
 		self.offset = 0;
-		magic = self.unpack('4s', self.data)
+		magic = self.unpack('4s', self.data).decode('ascii')
 		version = self.unpack('<I', self.data)
 
 		if magic != CMPT_MAGIC or version > CMPT_VERSION:
-			print("Unrecognized magic string %s or bad version %d" % (magic, version))
-			raise IOError
+			raise IOError("Unrecognized magic string %s or bad version %d" % (magic, version))
 
 		self.length = self.unpack('<I', self.data)
 		self.count = self.unpack('<I', self.data)
@@ -101,7 +100,7 @@ class CmptDecoder:
 			start_idx = self.offset
 
 			# All the possible inner tile items have a byte count in the same place.
-			inner_magic = self.unpack('4s', self.data)
+			inner_magic = self.unpack('4s', self.data).decode('ascii')
 			if inner_magic not in VALID_INTERIOR_TILES:
 				print("Unrecognized interior tile magic %s" % (inner_magic))
 			inner_version = self.unpack('<I', self.data)

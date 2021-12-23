@@ -33,14 +33,25 @@ def main():
 	parser.add_argument("filename")
 	args = parser.parse_args()
 
-	if args.b3dm and args.unpack and args.filename:
-		b3dm_decoder = b3dm.B3DM()
-		with open(args.filename, 'rb') as f:
-			data = f.read()
-			b3dm_decoder.readBinary(data)
-		with open(args.filename + '.glb', 'wb') as f:
-			output_data = b3dm_decoder.getGLTFBin()
-			f.write(output_data)
+	if args.unpack and args.filename:
+		if args.b3dm:
+			b3dm_decoder = b3dm.B3DM()
+			with open(args.filename, 'rb') as f:
+				data = f.read()
+				b3dm_decoder.readBinary(data)
+			with open(args.filename + '.glb', 'wb') as f:
+				output_data = b3dm_decoder.getGLTFBin()
+				f.write(output_data)
+		elif args.i3dm:
+			i3dm_decoder = i3dm.I3DM()
+			with open(args.filename, 'rb') as f:
+				data = f.read()
+				i3dm_decoder.readBinary(data)
+			with open(args.filename + '.glb', 'wb') as f:
+				output_data = i3dm_decoder.getGLTFBin()
+				f.write(output_data)
+		else:
+			raise ValueError('Must specify -b (--b3dm) or -i (--i3dm) to unpack')
 		sys.exit(0)
 
 	# Make sure the input file is *.glb
