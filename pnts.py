@@ -2,7 +2,7 @@
 
 #--------------------------------------------
 # pnts.py: Component of GLTF to GLB converter
-# (c) 2020 Geopipe, Inc.
+# (c) 2020 - 2021 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #--------------------------------------------
 
