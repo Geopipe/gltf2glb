@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #---------------------------------------------------------------------
 # packcmpt.py: CMPT file creator, to pack multiple Tile3D files into a
 # single package. Component of gltf2glb.
@@ -24,7 +24,7 @@ class CmptEncoder:
 		self.tile_count = 0
 
 	def add(self, filename):
-		with open(filename, 'r') as f:
+		with open(filename, 'rb') as f:
 			content = f.read()
 		# All interior tiles have a four-character extension
 		_, ext = os.path.splitext(filename)		# Get the extension
@@ -47,7 +47,7 @@ class CmptEncoder:
 
 	def composeHeader(self):
 		header = bytearray() # start with a fresh header!
-		header.extend(CMPT_MAGIC)						# Magic
+		header.extend(CMPT_MAGIC.encode('ascii'))		# Magic
 		header.extend(struct.pack('<I', 1))				# Version
 		header.extend(struct.pack('<I', CMPT_HEADER_LEN + len(self.body)))
 		header.extend(struct.pack('<I', self.tile_count))	# Number of tiles
@@ -97,7 +97,7 @@ class CmptDecoder:
 
 		# Now grab all the body items
 		self.tiles = []
-		for i in xrange(self.count):
+		for i in range(self.count):
 			start_idx = self.offset
 
 			# All the possible inner tile items have a byte count in the same place.

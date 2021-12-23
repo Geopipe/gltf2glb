@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #--------------------------------------------
 # b3dm.py: Component of GLTF to GLB converter
@@ -73,7 +73,7 @@ class B3DM:
 		         len(gltf_bin)
 	
 		output = bytearray()
-		output.extend(B3DM_MAGIC)
+		output.extend(B3DM_MAGIC.encode('ascii'))
 		output.extend(struct.pack('<I', B3DM_VERSION))
 		output.extend(struct.pack('<I', length))
 		output.extend(struct.pack('<I', len_feature_json))
