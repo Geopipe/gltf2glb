@@ -83,7 +83,7 @@ class PNTS(object):
 		         len_batch_json   + len_batch_bin
 	
 		output = bytearray()
-		output.extend(PNTS_MAGIC)
+		output.extend(PNTS_MAGIC.encode("ascii"))
 		output.extend(struct.pack('<I', PNTS_VERSION))
 		output.extend(struct.pack('<I', length))
 		output.extend(struct.pack('<I', len_feature_json))
