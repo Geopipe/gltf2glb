@@ -39,12 +39,12 @@ class BatchTable:
 			n_objs = len(data_in)
 			# Find all the fields for all the objects
 			if type(data_in) is list:
-				data_in = {i: data_in[i] for i in xrange(len(data_in))}
-			for obj, objval in data_in.iteritems():
+				data_in = {i: data_in[i] for i in range(len(data_in))}
+			for obj, objval in data_in.items():
 				obj = int(obj)
 
 				# Add this object's key-vals
-				for key, val in objval.iteritems():
+				for key, val in objval.items():
 					if not key in self.batch_in:
 						self.batch_in[key] = [None] * n_objs
 
@@ -55,7 +55,7 @@ class BatchTable:
 		else:
 			self.batch_in = data_in
 		if len(self.batch_in):
-			first_key = self.batch_in.keys()[0]
+			first_key = next(iter(self.batch_in))
 			self.num_features = len(self.batch_in[first_key])
 
 	def writeOutput(self):
@@ -63,7 +63,7 @@ class BatchTable:
 		# TODO: Add proper encoding to JSON + binary, rather than just
 		# punting to the naive method
 		data_out = self.batch_in
-		self.batch_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True))
+		self.batch_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True), encoding='utf8')
 
 		# TODO: Why do we clear this?
 		self.batch_in = bytearray()
@@ -75,11 +75,14 @@ class BatchTable:
 
 		# Pad with spaces to a multiple of 4 bytes
 		padded_batch_json_len = len(self.batch_json) + 3 & ~3
-		self.batch_json.extend(' ' * (padded_batch_json_len - len(self.batch_json)))
+		self.batch_json.extend([ord(' ')] * (padded_batch_json_len - len(self.batch_json)))
 
 		padded_batch_bin_len = len(self.batch_bin) + 3 & ~3
-		self.batch_bin.extend(' ' * (padded_batch_bin_len - len(self.batch_bin)))
+		self.batch_bin.extend([ord(' ')] * (padded_batch_bin_len - len(self.batch_bin)))
 
+	"""
+	Returns a bytearray of the JSON for the batch, ready to embed in another binary stream
+	"""
 	def getBatchJSON(self):
 		return self.batch_json
 
@@ -91,7 +94,7 @@ class BatchTable:
 
 	""" A few utilities """
 	def nestedListToBin(self, val, val_type):
-		val_codes = {'f32' : 'f','u16':'H'}
+		val_codes = {'f32' : 'f', 'u16' : 'H', 'u8' : 'B'}
 		if val_type not in val_codes:
 			raise TypeError("Don't know how to pack type '%s'" % val_type)
 		else:

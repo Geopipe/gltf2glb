@@ -29,7 +29,7 @@ class FeatureTable(BatchTable):
 		# punting to the naive method
 		data_out = self.features_global
 		data_out.update(self.batch_in)
-		self.features_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True))
+		self.features_json = bytearray(json.dumps(data_out, separators=(',', ':'), sort_keys=True), encoding='utf-8')
 		
 		# TODO: Why do we clear these?
 		self.batch_in = bytearray()
@@ -43,11 +43,14 @@ class FeatureTable(BatchTable):
 
 		# Pad with spaces to a multiple of 4 bytes
 		padded_features_json_len = len(self.features_json) + 3 & ~3
-		self.features_json.extend(' ' * (padded_features_json_len - len(self.features_json)))
+		self.features_json.extend([ord(' ')] * (padded_features_json_len - len(self.features_json)))
 
 		padded_features_bin_len = len(self.features_bin) + 3 & ~3
-		self.features_bin.extend(' ' * (padded_features_bin_len - len(self.features_bin)))
+		self.features_bin.extend([ord(' ')] * (padded_features_bin_len - len(self.features_bin)))
 
+	"""
+	Returns a bytearray of the JSON for the features, ready to embed in another binary stream
+	"""
 	def getFeatureJSON(self):
 		return self.features_json
 
@@ -61,7 +64,7 @@ class InstanceFeatureTable(FeatureTable):
 		
 	def finalize(self):
 		new_batch_in = {}
-		for key, val in self.batch_in.iteritems():
+		for key, val in self.batch_in.items():
 			offset = len(self.features_bin)
 			
 			buf_bin = None

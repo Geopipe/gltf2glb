@@ -2,7 +2,7 @@
 #--------------------------------------------------------------------------
 # tile3dinfo.py: Parse a CMPT, B3DM, or I3DM file (recursively) and deliver
 # information about what it contains. Component of gltf2glb.
-# (c) 2016-2020 Geopipe, Inc.
+# (c) 2016-2021 Geopipe, Inc.
 # All rights reserved. See LICENSE.
 #--------------------------------------------------------------------------
 

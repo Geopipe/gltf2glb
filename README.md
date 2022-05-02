@@ -1,31 +1,15 @@
 # gltf2glb
-GLTF to Binary GLTF (GLB) Converter
+Tools to manipulate GLTF/GLB-containing files such as .b3dm, .i3dm, .pnts, and .cmpt.
 
 Created by Christopher Mitchell, Ph.D. et alia of Geopipe, Inc.
 
-This project was inspired by https://github.com/Qantas94Heavy/binary-gltf-utils and started as a direct Javascript-to-Python port with a bunch of bugfixes. It can create both b3dm and i3dm files for Cesium 3D Tiles. It also includes a `packcmpt` tool for combining one or more `i3dm`/`b3dm` models into a single `cmpt` file.
+This project was initially intended to provide a GLTF-to-GLB packer, inspired by
+the desire to use https://github.com/Qantas94Heavy/binary-gltf-util without running Javascript
+as a server-side language. It has evolved to remove its first component (gltf2glb.py), instead
+providing the tools shown below to pack and unpack GLTF/GLB files into and out of other containers.
 
 Usage
 -----
-
-### gltf2glb ###
-```
-$ ./gltf2glb.py -h
-usage: gltf2glb.py [-h] [-e] [-c] [-i I3DM] [-b B3DM] [-o OUTPUT] filename
-
-Converts GLTF to GLB
-
-positional arguments:
-  filename
-
-optional arguments:
-  -h, --help                    show this help message and exit
-  -e, --embed                   Embed textures or shares into binary GLTF file
-  -c, --cesium                  sets the old body buffer name for compatibility with Cesium [UNNECESSARY - DEPRECATED]
-  -i I3DM, --i3dm I3DM          Export i3dm, with optional path to JSON instance table data
-  -b B3DM, --b3dm B3DM          Export b3dm, with optional path to JSON batch table data
-  -o OUTPUT, --output OUTPUT    Optional output path (defaults to the path of the input file
-```
 
 ### packcmpt ###
 ```
@@ -59,4 +43,4 @@ optional arguments:
 
 License
 -------
-(c) 2016-2019 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.
+(c) 2016-2021 Geopipe, Inc. and licensed under the BSD 3-Clause license. See LICENSE.

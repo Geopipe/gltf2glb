@@ -58,6 +58,9 @@ class I3DM(object):
 	def writeBinary(self, gltf_bin, embed_gltf = True, num_batches = 0, num_feature_features = 0):
 		self.embed_gltf = embed_gltf
 
+		# Make sure that it's a byte array, not a string
+		gltf_bin = gltf_bin if embed_gltf else gltf_bin.encode('utf-8')
+
 		# Add the required field BATCH_LENGTH to the feature table,
 		# as well as any other required globals
 		num_batch_features = max(num_batches, self.batch_table.getNumFeatures())
@@ -105,7 +108,7 @@ class I3DM(object):
 		         len(gltf_bin)
 	
 		output = bytearray()
-		output.extend(I3DM_MAGIC)
+		output.extend(I3DM_MAGIC.encode('utf-8'))
 		output.extend(struct.pack('<I', I3DM_VERSION))
 		output.extend(struct.pack('<I', length))
 		output.extend(struct.pack('<I', len_feature_json))
@@ -133,7 +136,7 @@ class I3DM(object):
 		self.gltf_bin = self.unpackString(data, self.length - self.offset)
 
 	def readHeader(self, data):
-		self.magic = self.unpack('4s', data)
+		self.magic = self.unpack('4s', data).decode('utf-8')
 		self.version = self.unpack('<I', data)
 
 		if self.magic != I3DM_MAGIC or self.version > I3DM_VERSION:
